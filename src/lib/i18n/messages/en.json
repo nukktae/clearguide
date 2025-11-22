@@ -1,0 +1,298 @@
+{
+  "common": {
+    "upload": "Upload File",
+    "uploadDocument": "Upload Document",
+    "dragDrop": "Drag and drop a file here or click to select",
+    "selectFile": "Select File",
+    "processing": "Processing...",
+    "summary": "Summary",
+    "actions": "Actions",
+    "risks": "Risks",
+    "deadline": "Deadline",
+    "location": "Location",
+    "requiredDocs": "Required Documents",
+    "notes": "Notes",
+    "history": "Document History",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "viewDetails": "View Details",
+    "uploadDate": "Upload Date",
+    "documentType": "Document Type",
+    "status": "Status",
+    "noDocuments": "No documents saved",
+    "errorOccurred": "An error occurred",
+    "loading": "Loading..."
+  },
+  "summary": {
+    "title": "Key Summary",
+    "subtitle": "Easy explanation of this document's main content"
+  },
+  "actions": {
+    "title": "What To Do",
+    "subtitle": "Please follow these steps",
+    "completed": "Completed",
+    "online": "Online",
+    "offline": "Offline",
+    "phone": "Phone",
+    "mail": "Mail",
+    "deadline": "Deadline",
+    "requiredDocs": "Required Documents",
+    "notes": "Notes"
+  },
+  "risks": {
+    "title": "Risks & Warnings",
+    "penalty": "Penalty Risk",
+    "benefitCancellation": "Benefit Cancellation Risk",
+    "eligibilityLoss": "Eligibility Loss",
+    "deadline": "Deadline",
+    "critical": "Critical"
+  },
+  "upload": {
+    "title": "Public Document AI Assistant",
+    "subtitle": "Easily understand tax notices, fines, community center notices, and more",
+    "supportedFormats": "Supported formats: PDF, JPG, PNG",
+    "maxSize": "Max size: 10MB"
+  },
+  "landing": {
+    "hero": {
+      "title": "Public documents, understood at a glance",
+      "subtitle": "AI easily interprets complex public documents and clearly guides you on necessary actions and deadlines.",
+      "cta": "Get Started",
+      "trust": {
+        "noDataStorage": "No personal data storage",
+        "aiOptimized": "AI-based public document optimization",
+        "userControl": "100% user control"
+      }
+    },
+    "features": {
+      "title": "Key Features",
+      "easySummary": {
+        "title": "Easy Summary",
+        "description": "AI accurately and easily interprets complex public documents for you."
+      },
+      "actionGuide": {
+        "title": "Action Guide",
+        "description": "Clearly guides you through necessary actions step by step."
+      },
+      "riskAlerts": {
+        "title": "Risk Alerts",
+        "description": "Notifies you of important deadlines and warnings."
+      },
+      "documentHistory": {
+        "title": "Document History",
+        "description": "Review previously analyzed documents anytime."
+      }
+    },
+    "cta": {
+      "title": "Get Started Now",
+      "subtitle": "Step-by-step guidance and key summaries",
+      "description": "Upload public documents and understand them accurately and easily with AI assistance.",
+      "button": "Start Free"
+    },
+    "footer": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "contact": "Contact Us"
+    }
+  },
+  "documentTypes": {
+    "title": "Supported Document Types",
+    "subtitle": "AI quickly organizes the essentials from any document.",
+    "categories": {
+      "government": {
+        "title": "Administrative/Government Documents",
+        "tax": "Tax Notice",
+        "penalty": "Penalty Notice",
+        "community": "Community Center Notice",
+        "government": "Public Agency Document"
+      },
+      "legal": {
+        "title": "Legal/Contract Documents",
+        "contract": "Contract / Notice",
+        "employment": "Employment / Labor Documents"
+      },
+      "foreigner": {
+        "title": "Foreigner/Visa Documents",
+        "immigration": "Immigration / Visa Documents",
+        "school": "School Documents",
+        "bank": "Bank / Financial Documents"
+      }
+    },
+    "foreignerSupport": {
+      "title": "Foreigner documents also supported",
+      "description": "Automatically guides you through visa documents, residence permits, bank/school documents, and more."
+    }
+  },
+  "navigation": {
+    "documentAnalysis": "Document Analysis",
+    "storage": "Storage",
+    "myCalendar": "My Calendar",
+    "profile": "Profile",
+    "logout": "Logout",
+    "brandName": "ClearGuide"
+  },
+  "aiAssistant": {
+    "title": "AI Assistant",
+    "subtitle": "Real-time help",
+    "question": "Have any questions?",
+    "startChat": "Start Chat"
+  },
+  "usefulLinks": {
+    "title": "Useful Links"
+  },
+  "account": {
+    "sections": {
+      "basic": {
+        "title": "Basic Information",
+        "description": "Manage your account information"
+      },
+      "preferences": {
+        "title": "Environment Settings",
+        "description": "Personalize your app usage environment"
+      },
+      "notifications": {
+        "title": "Notifications & Calendar",
+        "description": "Manage notification settings and calendar synchronization"
+      },
+      "security": {
+        "title": "Security",
+        "description": "Manage your account security settings"
+      },
+      "documents": {
+        "title": "Documents",
+        "description": "Manage your document settings"
+      },
+      "danger": {
+        "title": "Danger Zone",
+        "description": "Irreversible and destructive actions"
+      }
+    },
+    "preferences": {
+      "language": {
+        "title": "Language Settings",
+        "korean": "Korean",
+        "english": "English",
+        "easyKoreanMode": "Easy Korean Mode"
+      },
+      "summaryStyle": {
+        "title": "Summary Style",
+        "brief": "Simple",
+        "detailed": "Detailed",
+        "ultraSimple": "Very Simple"
+      },
+      "screen": {
+        "title": "Screen Settings",
+        "darkMode": "Dark Mode",
+        "fontSize": "Font Size",
+        "small": "Small",
+        "medium": "Normal",
+        "large": "Large"
+      }
+    }
+  },
+  "recentDocuments": {
+    "title": "Quickly open recent documents"
+  },
+  "history": {
+    "title": "Archive",
+    "subtitle": "View and manage all your uploaded documents at a glance.",
+    "loadError": "Failed to load document list.",
+    "unknownError": "Unknown error"
+  },
+  "calendar": {
+    "title": "My Calendar",
+    "subtitle": "View deadlines and important dates extracted from your documents at a glance.",
+    "loadError": "Failed to load document list.",
+    "unknownError": "Unknown error",
+    "emptyTitle": "No scheduled events this month.",
+    "emptySubtitle": "Deadlines will be automatically added when you upload documents."
+  },
+  "emptyState": {
+    "title": "Archive is empty",
+    "subtitle": "Upload documents and they will be automatically analyzed and managed here.",
+    "uploadButton": "Upload Document"
+  },
+  "mobileMenu": {
+    "title": "Menu",
+    "documentAnalysis": "Document Analysis",
+    "archive": "Archive",
+    "myCalendar": "My Calendar",
+    "account": "Account"
+  },
+  "documentSidebar": {
+    "title": "Filter",
+    "all": "All Documents",
+    "tax": "Tax Related",
+    "community": "Community Center",
+    "penalty": "Fines/Penalties",
+    "starred": "My Important Documents",
+    "overdue": "Overdue Documents",
+    "pdf": "PDF",
+    "image": "Image Files"
+  },
+  "headerControls": {
+    "searchPlaceholder": "Search documents...",
+    "sort": "Sort",
+    "sortLatest": "Latest",
+    "sortOldest": "Oldest",
+    "sortNameAsc": "Name (A-Z)",
+    "sortNameDesc": "Name (Z-A)"
+  },
+  "documentTable": {
+    "fileName": "File Name",
+    "documentType": "Document Type",
+    "uploadDate": "Upload Date",
+    "analysisStatus": "Analysis Status",
+    "warnings": "Warnings",
+    "completed": "Completed",
+    "overdue": "Overdue",
+    "items": "items",
+    "view": "View",
+    "summary": "Summary",
+    "actionGuide": "Action Guide",
+    "addToCalendar": "Add to Calendar"
+  },
+  "calendar": {
+    "title": "My Calendar",
+    "subtitle": "View deadlines and important dates extracted from your documents at a glance.",
+    "loadError": "Failed to load document list.",
+    "unknownError": "Unknown error",
+    "emptyTitle": "No scheduled events this month.",
+    "emptySubtitle": "Deadlines will be automatically added when you upload documents.",
+    "today": "Today",
+    "calendarView": "Calendar View",
+    "listView": "List View",
+    "upcomingSchedule": "Upcoming Schedule",
+    "daysOfWeek": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "deadlineOverdue": "Deadline Passed",
+    "dDay": "D-day"
+  },
+  "baseInfo": {
+    "profilePicture": "Profile Picture",
+    "change": "Change",
+    "name": "Name",
+    "edit": "Edit",
+    "email": "Email",
+    "phoneNumber": "Phone Number",
+    "notRegistered": "Not registered",
+    "add": "Add",
+    "accountCreated": "Account Created",
+    "loginMethod": "Login Method"
+  }
+}
+

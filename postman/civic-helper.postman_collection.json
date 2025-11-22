@@ -1,0 +1,121 @@
+{
+  "info": {
+    "name": "Civic Helper API",
+    "description": "API collection for Korean Public Document AI Assistant",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Upload Document",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/app/api/upload",
+          "host": ["{{base_url}}"],
+          "path": ["app", "api", "upload"]
+        },
+        "description": "Upload a PDF or image file for processing"
+      },
+      "response": []
+    },
+    {
+      "name": "Parse Document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"documentId\": \"example-document-id\",\n  \"rawText\": \"세금고지서 내용 예시...\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/app/api/parse",
+          "host": ["{{base_url}}"],
+          "path": ["app", "api", "parse"]
+        },
+        "description": "Parse document text using AI to extract summary, actions, and risks"
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Documents",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/app/api/documents",
+          "host": ["{{base_url}}"],
+          "path": ["app", "api", "documents"]
+        },
+        "description": "Retrieve all saved documents"
+      },
+      "response": []
+    },
+    {
+      "name": "Save Document",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"document\": {\n    \"id\": \"example-id\",\n    \"fileName\": \"example.pdf\",\n    \"fileType\": \"application/pdf\",\n    \"fileSize\": 1024,\n    \"uploadedAt\": \"2025-01-01T00:00:00Z\"\n  },\n  \"parsedDocument\": {\n    \"documentId\": \"example-id\",\n    \"summary\": {\n      \"bullets\": [\"요약 항목 1\", \"요약 항목 2\"],\n      \"docType\": \"세금고지서\",\n      \"tone\": \"friendly\"\n    },\n    \"actions\": [],\n    \"risks\": []\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/app/api/documents",
+          "host": ["{{base_url}}"],
+          "path": ["app", "api", "documents"]
+        },
+        "description": "Save a parsed document"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Document by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/app/api/documents/:id",
+          "host": ["{{base_url}}"],
+          "path": ["app", "api", "documents", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": "example-document-id"
+            }
+          ]
+        },
+        "description": "Retrieve a specific document by ID"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
+

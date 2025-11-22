@@ -1,0 +1,28 @@
+import { getRequestConfig } from "next-intl/server";
+import { cookies } from "next/headers";
+import { routing } from "./routing";
+
+export default getRequestConfig(async ({ requestLocale }) => {
+  // Try to get locale from cookie first (preference-based)
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get("clearguide_locale");
+  
+  let locale: string;
+  
+  if (localeCookie && routing.locales.includes(localeCookie.value as any)) {
+    locale = localeCookie.value;
+  } else {
+    // Fallback to URL-based locale or default
+    locale = (await requestLocale) || routing.defaultLocale;
+    
+    if (!routing.locales.includes(locale as any)) {
+      locale = routing.defaultLocale;
+    }
+  }
+
+  return {
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default,
+  };
+});
+

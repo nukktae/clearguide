@@ -1,0 +1,299 @@
+{
+  "common": {
+    "upload": "파일 업로드",
+    "uploadDocument": "문서 업로드",
+    "dragDrop": "파일을 여기에 끌어다 놓거나 클릭하여 선택하세요",
+    "selectFile": "파일 선택",
+    "processing": "처리 중...",
+    "summary": "요약",
+    "actions": "해야 할 일",
+    "risks": "주의사항",
+    "deadline": "기한",
+    "location": "장소",
+    "requiredDocs": "준비 서류",
+    "notes": "참고사항",
+    "history": "문서 내역",
+    "back": "뒤로",
+    "save": "저장",
+    "cancel": "취소",
+    "viewDetails": "자세히 보기",
+    "uploadDate": "업로드일",
+    "documentType": "문서 유형",
+    "status": "상태",
+    "noDocuments": "저장된 문서가 없습니다",
+    "errorOccurred": "오류 발생",
+    "loading": "로딩 중...",
+    "document": "문서"
+  },
+  "summary": {
+    "title": "핵심 요약",
+    "subtitle": "이 문서의 주요 내용을 쉽게 설명합니다"
+  },
+  "actions": {
+    "title": "해야 할 일",
+    "subtitle": "다음 단계를 따라주세요",
+    "completed": "완료됨",
+    "online": "온라인",
+    "offline": "오프라인",
+    "phone": "전화",
+    "mail": "우편",
+    "deadline": "기한",
+    "requiredDocs": "준비 서류",
+    "notes": "참고사항"
+  },
+  "risks": {
+    "title": "주의사항",
+    "penalty": "과태료 가능성",
+    "benefitCancellation": "혜택 취소 위험",
+    "eligibilityLoss": "자격 상실",
+    "deadline": "기한",
+    "critical": "중요"
+  },
+  "upload": {
+    "title": "클리어가이드",
+    "subtitle": "세금고지서, 과태료, 주민센터 안내문 등을 쉽게 이해하세요",
+    "supportedFormats": "지원 형식: PDF, JPG, PNG",
+    "maxSize": "최대 크기: 10MB"
+  },
+  "landing": {
+    "hero": {
+      "title": "공공문서, 한 번에 이해되도록",
+      "subtitle": "복잡한 공공문서를 AI가 쉽게 해석하고, 필요한 조치와 마감일을 명확히 안내합니다.",
+      "cta": "시작하기",
+      "trust": {
+        "noDataStorage": "개인정보 저장 없음",
+        "aiOptimized": "AI 기반 공공문서 최적화",
+        "userControl": "사용자가 100% 통제"
+      }
+    },
+    "features": {
+      "title": "주요 기능",
+      "easySummary": {
+        "title": "쉬운 요약",
+        "description": "복잡한 공공문서를 AI가 내용을 정확하고 쉽게 해석해드립니다."
+      },
+      "actionGuide": {
+        "title": "행동 가이드",
+        "description": "필요한 조치를 단계별로 명확하게 안내합니다."
+      },
+      "riskAlerts": {
+        "title": "위험 알림",
+        "description": "중요한 기한과 주의사항을 알려드립니다."
+      },
+      "documentHistory": {
+        "title": "문서 내역",
+        "description": "이전에 분석한 문서를 언제든지 다시 확인할 수 있습니다."
+      }
+    },
+    "cta": {
+      "title": "지금 시작하세요",
+      "subtitle": "단계별 안내 및 핵심 요약 제공",
+      "description": "공공문서를 업로드하고 AI의 도움을 받아 정확하고 쉽게 이해하세요.",
+      "button": "무료로 시작하기"
+    },
+    "footer": {
+      "terms": "이용약관",
+      "privacy": "개인정보처리방침",
+      "contact": "문의하기"
+    }
+  },
+  "documentTypes": {
+    "title": "업로드 가능한 문서 종류",
+    "subtitle": "어떤 문서든 AI가 핵심만 빠르게 정리해드립니다.",
+    "categories": {
+      "government": {
+        "title": "행정/정부 문서",
+        "tax": "세금 고지서",
+        "penalty": "과태료 통지서",
+        "community": "주민센터 안내문",
+        "government": "공공기관 문서"
+      },
+      "legal": {
+        "title": "법률/계약 문서",
+        "contract": "계약서 / 고지문",
+        "employment": "고용·근로 서류"
+      },
+      "foreigner": {
+        "title": "외국인/비자 문서",
+        "immigration": "출입국·비자 서류",
+        "school": "학교 서류",
+        "bank": "은행·금융 문서"
+      }
+    },
+    "foreignerSupport": {
+      "title": "외국인 서류도 지원합니다",
+      "description": "비자 문서, 체류허가서, 은행/학교 서류 등을 자동으로 안내해드립니다."
+    }
+  },
+  "navigation": {
+    "documentAnalysis": "문서 분석",
+    "storage": "보관함",
+    "myCalendar": "나의 캘린더",
+    "profile": "프로필",
+    "logout": "로그아웃",
+    "brandName": "클리어가이드"
+  },
+  "aiAssistant": {
+    "title": "AI Assistant",
+    "subtitle": "실시간 도움",
+    "question": "궁금한 내용 있으신가요?",
+    "startChat": "Start Chat"
+  },
+  "usefulLinks": {
+    "title": "Useful Links"
+  },
+  "account": {
+    "sections": {
+      "basic": {
+        "title": "기본 정보",
+        "description": "계정 정보를 관리합니다"
+      },
+      "preferences": {
+        "title": "환경 설정",
+        "description": "앱 사용 환경을 개인화할 수 있습니다"
+      },
+      "notifications": {
+        "title": "알림 & 캘린더",
+        "description": "알림 설정 및 캘린더 동기화를 관리합니다"
+      },
+      "security": {
+        "title": "보안",
+        "description": "계정 보안 설정을 관리합니다"
+      },
+      "documents": {
+        "title": "문서",
+        "description": "문서 설정을 관리합니다"
+      },
+      "danger": {
+        "title": "위험 구역",
+        "description": "되돌릴 수 없고 파괴적인 작업"
+      }
+    },
+    "preferences": {
+      "language": {
+        "title": "언어 설정",
+        "korean": "한국어",
+        "english": "English",
+        "easyKoreanMode": "쉬운 한국어 모드"
+      },
+      "summaryStyle": {
+        "title": "요약 스타일",
+        "brief": "간단",
+        "detailed": "상세",
+        "ultraSimple": "초간단"
+      },
+      "screen": {
+        "title": "화면 설정",
+        "darkMode": "다크 모드",
+        "fontSize": "글자 크기",
+        "small": "작게",
+        "medium": "보통",
+        "large": "크게"
+      }
+    }
+  },
+  "recentDocuments": {
+    "title": "최근 문서 빠르게 열기"
+  },
+  "history": {
+    "title": "보관함",
+    "subtitle": "업로드한 문서를 한눈에 정리하고 관리할 수 있습니다.",
+    "loadError": "문서 목록을 불러오는데 실패했습니다.",
+    "unknownError": "알 수 없는 오류"
+  },
+  "calendar": {
+    "title": "나의 캘린더",
+    "subtitle": "문서에서 추출된 마감일과 중요한 일정을 한눈에 확인하세요.",
+    "loadError": "문서 목록을 불러오는데 실패했습니다.",
+    "unknownError": "알 수 없는 오류",
+    "emptyTitle": "이번 달에는 등록된 일정이 없습니다.",
+    "emptySubtitle": "문서를 업로드하면 자동으로 마감일이 추가됩니다."
+  },
+  "emptyState": {
+    "title": "보관함이 비어 있습니다",
+    "subtitle": "문서를 업로드하면 자동으로 분석되고 여기에서 관리할 수 있습니다.",
+    "uploadButton": "문서 업로드하기"
+  },
+  "mobileMenu": {
+    "title": "메뉴",
+    "documentAnalysis": "문서 분석",
+    "archive": "보관함",
+    "myCalendar": "나의 캘린더",
+    "account": "계정"
+  },
+  "documentSidebar": {
+    "title": "필터",
+    "all": "전체 문서",
+    "tax": "세금 관련",
+    "community": "주민센터",
+    "penalty": "과태료/벌금",
+    "starred": "내가 표시한 중요 문서",
+    "overdue": "기한 경과 문서",
+    "pdf": "PDF",
+    "image": "이미지 파일"
+  },
+  "headerControls": {
+    "searchPlaceholder": "문서 검색...",
+    "sort": "정렬",
+    "sortLatest": "최신순",
+    "sortOldest": "오래된순",
+    "sortNameAsc": "이름순 (가나다)",
+    "sortNameDesc": "이름순 (역순)"
+  },
+  "documentTable": {
+    "fileName": "파일명",
+    "documentType": "문서 유형",
+    "uploadDate": "업로드 날짜",
+    "analysisStatus": "분석 상태",
+    "warnings": "주의사항",
+    "completed": "완료",
+    "overdue": "기한 경과",
+    "items": "개",
+    "view": "보기",
+    "summary": "요약",
+    "actionGuide": "액션 가이드",
+    "addToCalendar": "캘린더에 추가"
+  },
+  "calendar": {
+    "title": "나의 캘린더",
+    "subtitle": "문서에서 추출된 마감일과 중요한 일정을 한눈에 확인하세요.",
+    "loadError": "문서 목록을 불러오는데 실패했습니다.",
+    "unknownError": "알 수 없는 오류",
+    "emptyTitle": "이번 달에는 등록된 일정이 없습니다.",
+    "emptySubtitle": "문서를 업로드하면 자동으로 마감일이 추가됩니다.",
+    "today": "오늘",
+    "calendarView": "달력 보기",
+    "listView": "목록 보기",
+    "upcomingSchedule": "다가오는 일정",
+    "daysOfWeek": {
+      "sun": "일",
+      "mon": "월",
+      "tue": "화",
+      "wed": "수",
+      "thu": "목",
+      "fri": "금",
+      "sat": "토"
+    },
+    "severity": {
+      "critical": "긴급",
+      "high": "높음",
+      "medium": "보통",
+      "low": "낮음"
+    },
+    "deadlineOverdue": "기한 경과",
+    "dDay": "D-day"
+  },
+  "baseInfo": {
+    "profilePicture": "프로필 사진",
+    "change": "변경",
+    "name": "이름",
+    "edit": "수정",
+    "email": "이메일",
+    "phoneNumber": "전화번호",
+    "notRegistered": "등록되지 않음",
+    "add": "추가",
+    "accountCreated": "계정 생성일",
+    "loginMethod": "로그인 방법"
+  }
+}
+

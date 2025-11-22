@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* Ensure dark mode is enabled for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #1A1A1A;
+  
+  /* Brand Colors */
+  --primary-navy: #1A2A4F;
+  --secondary-teal: #2DB7A3;
+  --accent-amber: #F2B84B;
+  --bg-light: #F4F6F9;
+  --text-headline: #1A1A1A;
+  --text-body: #3C3C3C;
+  --text-subtext: #6D6D6D;
+
+  /* Font Size Multipliers */
+  --font-size-multiplier: 1;
+  --font-size-small: 0.875;
+  --font-size-medium: 1;
+  --font-size-large: 1.125;
+}
+
+/* Dark mode variables */
+.dark {
+  --background: #0F172A;
+  --foreground: #F1F5F9;
+  --bg-light: #1E293B;
+  --text-headline: #F1F5F9;
+  --text-body: #CBD5E1;
+  --text-subtext: #94A3B8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary-navy);
+  --color-secondary: var(--secondary-teal);
+  --color-accent: var(--accent-amber);
+  --color-bg-light: var(--bg-light);
+  --color-text-headline: var(--text-headline);
+  --color-text-body: var(--text-body);
+  --color-text-subtext: var(--text-subtext);
+  --font-sans: var(--font-pretendard);
+}
+
+body {
+  background: var(--bg-light);
+  color: var(--text-body);
+  font-family: var(--font-pretendard), "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: calc(15px * var(--font-size-multiplier));
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Removed all font-size: inherit rules - they were overriding Tailwind text size classes */
+/* Tailwind classes like text-4xl, text-lg, etc. now work properly */
+/* The font-size-multiplier only affects body text, not elements with explicit Tailwind classes */
+
+/* Debug: Log font size changes */
+@media (prefers-reduced-motion: no-preference) {
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Accessibility improvements */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--primary-navy);
+  outline-offset: 2px;
+}
+
+/* Ensure sufficient color contrast */
+.text-headline {
+  color: var(--text-headline);
+}
+
+.text-body {
+  color: var(--text-body);
+}
+
+.text-subtext {
+  color: var(--text-subtext);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.slide-in-from-bottom-2 {
+  animation: slide-in-from-bottom 0.3s ease-out;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.delay-75 {
+  animation-delay: 75ms;
+}
+
+.delay-150 {
+  animation-delay: 150ms;
+}
+
+.delay-225 {
+  animation-delay: 225ms;
+}
