@@ -92,6 +92,8 @@ export function PDFJSViewer({
     }
 
     async function renderPage() {
+      if (!pdfDocument) return;
+      
       try {
         const page = await pdfDocument.getPage(currentPage);
         const viewport = page.getViewport({ scale: currentScale });
@@ -113,6 +115,7 @@ export function PDFJSViewer({
         const renderContext = {
           canvasContext: context,
           viewport: viewport,
+          canvas: canvas,
         };
         
         await page.render(renderContext).promise;
