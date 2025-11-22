@@ -7,6 +7,7 @@ import { HeaderWrapper } from "@/src/components/layout/HeaderWrapper";
 import { PreferencesProviderWrapper } from "@/src/components/preferences/PreferencesProviderWrapper";
 import { DarkModeScript } from "@/src/components/preferences/DarkModeScript";
 import { ChatbotWrapper } from "@/src/components/chat/ChatbotWrapper";
+import { AuthProvider } from "@/src/contexts/AuthContext";
 import "./globals.css";
 
 const notoSansKR = Noto_Sans_KR({
@@ -37,11 +38,13 @@ export default async function RootLayout({
       <body className={`${notoSansKR.variable} antialiased`}>
         <DarkModeScript />
         <NextIntlClientProvider messages={messages}>
-          <PreferencesProviderWrapper>
-            <HeaderWrapper />
-            {children}
-            <ChatbotWrapper />
-          </PreferencesProviderWrapper>
+          <AuthProvider>
+            <PreferencesProviderWrapper>
+              <HeaderWrapper />
+              {children}
+              <ChatbotWrapper />
+            </PreferencesProviderWrapper>
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

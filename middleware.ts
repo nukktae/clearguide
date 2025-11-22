@@ -13,10 +13,11 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = pathname === "/login" || pathname === "/login/signup";
 
   if (isProtectedRoute) {
-    // Check for auth cookie (set by login)
+    // Check for auth cookie (Firebase token or legacy "true" value)
     const authCookie = request.cookies.get("clearguide_auth");
     
-    if (!authCookie || authCookie.value !== "true") {
+    // Accept both Firebase tokens (long strings) and legacy "true" value for backward compatibility
+    if (!authCookie || (authCookie.value !== "true" && authCookie.value.length < 100)) {
       // Redirect to login with return URL
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
@@ -27,7 +28,7 @@ export function middleware(request: NextRequest) {
   // If already authenticated and trying to access login, redirect to app
   if (isAuthRoute) {
     const authCookie = request.cookies.get("clearguide_auth");
-    if (authCookie && authCookie.value === "true") {
+    if (authCookie && (authCookie.value === "true" || authCookie.value.length >= 100)) {
       return NextResponse.redirect(new URL("/app", request.url));
     }
   }

@@ -5,12 +5,14 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, LogOut, ChevronDown } from "lucide-react";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export function AccountDropdown() {
   const [isOpen, setIsOpen] = React.useState(false);
   const router = useRouter();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const t = useTranslations();
+  const { signOut, user } = useAuth();
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,14 +33,18 @@ export function AccountDropdown() {
     };
   }, [isOpen]);
 
-  const handleLogout = () => {
-    // Clear auth cookie
-    document.cookie = "clearguide_auth=; path=/; max-age=0";
-    // Clear localStorage
-    localStorage.removeItem("clearguide_auth");
-    // Redirect to login
-    router.push("/login");
-    setIsOpen(false);
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setIsOpen(false);
+    } catch (error) {
+      // Fallback: clear cookies and localStorage manually
+      document.cookie = "clearguide_auth=; path=/; max-age=0";
+      localStorage.removeItem("clearguide_auth");
+      localStorage.removeItem("clearguide_user");
+      router.push("/login");
+      setIsOpen(false);
+    }
   };
 
   return (
@@ -49,8 +55,16 @@ export function AccountDropdown() {
         aria-label="Account menu"
         aria-expanded={isOpen}
       >
-        <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-          <User className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400" />
+        <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+          {user?.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt={user.displayName || "User"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400" />
+          )}
         </div>
         <ChevronDown
           className={`h-4 w-4 text-[#6D6D6D] dark:text-gray-400 transition-transform ${
