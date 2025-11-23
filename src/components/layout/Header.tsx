@@ -50,7 +50,7 @@ export function Header() {
             {/* Left Side: Logo + Navigation */}
             <div className="flex items-center gap-8">
               {/* Logo */}
-              <Link href="/" className="flex items-center gap-2 shrink-0">
+              <Link href={isAuthenticated ? "/app" : "/"} className="flex items-center gap-2 shrink-0">
                 <Image
                   src="/images/logos/clearguidelogo.png"
                   alt="클리어가이드"
