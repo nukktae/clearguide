@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import { cookies } from "next/headers";
@@ -9,12 +8,6 @@ import { DarkModeScript } from "@/src/components/preferences/DarkModeScript";
 import { ChatbotWrapper } from "@/src/components/chat/ChatbotWrapper";
 import { AuthProvider } from "@/src/contexts/AuthContext";
 import "./globals.css";
-
-const batang = localFont({
-  src: "./../../public/font/BATANG.ttf",
-  variable: "--font-batang",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "클리어가이드 | ClearGuide",
@@ -35,7 +28,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} className="bg-[#FFFFFF]">
-      <body className={`${batang.variable} antialiased bg-[#FFFFFF]`}>
+      <body className="antialiased bg-[#FFFFFF]">
         <DarkModeScript />
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
