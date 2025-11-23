@@ -5,30 +5,90 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/src/components/common/Alert";
 import { RiskAlert } from "@/src/lib/parsing/types";
 import { Calendar, Plus } from "lucide-react";
-import { formatDeadlineWithDays, downloadCalendarEvent, parseDeadline } from "@/src/lib/utils/calendar";
+import { formatDeadlineWithDays, parseDeadline, getDeadlineStatus } from "@/src/lib/utils/calendar";
+import { useRouter } from "next/navigation";
 
 export interface RiskAlertBoxProps {
   risks: RiskAlert[];
+  documentId?: string;
+  documentName?: string;
 }
 
-export function RiskAlertBox({ risks }: RiskAlertBoxProps) {
+export function RiskAlertBox({ risks, documentId, documentName }: RiskAlertBoxProps) {
   const t = useTranslations("risks");
+  const router = useRouter();
+  const [isAddingToCalendar, setIsAddingToCalendar] = React.useState<string | null>(null);
 
-  const handleAddToCalendar = (risk: RiskAlert) => {
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "penalty":
+        return t("penalty");
+      case "benefitCancellation":
+        return t("benefitCancellation");
+      case "eligibilityLoss":
+        return t("eligibilityLoss");
+      case "deadline":
+        return t("deadline");
+      default:
+        return t("critical");
+    }
+  };
+
+  const handleAddToCalendar = async (risk: RiskAlert) => {
     if (!risk.deadline) return;
     
-    const deadlineDate = parseDeadline(risk.deadline);
-    if (!deadlineDate) return;
+    setIsAddingToCalendar(risk.id);
 
-    // Set time to end of day (23:59) for deadline
-    deadlineDate.setHours(23, 59, 0, 0);
+    try {
+      // Determine urgency based on severity and deadline status
+      const deadlineStatus = getDeadlineStatus(risk.deadline);
+      let urgency: "critical" | "high" | "medium" | "low" | "action" = risk.severity as any;
+      
+      if (deadlineStatus === "overdue") {
+        urgency = "critical";
+      } else if (deadlineStatus === "soon" || risk.severity === "critical") {
+        urgency = "high";
+      } else if (risk.severity === "high") {
+        urgency = "high";
+      } else if (risk.severity === "medium") {
+        urgency = "medium";
+      } else {
+        urgency = "low";
+      }
 
-    downloadCalendarEvent({
-      title: `${risk.title} - ${t(risk.type)}`,
-      description: risk.message,
-      startDate: deadlineDate,
-      endDate: deadlineDate,
-    });
+      // Format deadline as YYYY-MM-DD
+      const deadlineStr = risk.deadline.split("T")[0];
+
+      const response = await fetch("/app/api/calendar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: `${risk.title} - ${getTypeLabel(risk.type)}`,
+          description: risk.message,
+          deadline: deadlineStr,
+          urgency: urgency,
+          documentId: documentId,
+          documentName: documentName,
+          type: "risk",
+          severity: risk.severity,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "캘린더에 추가하는데 실패했습니다.");
+      }
+
+      // Redirect to calendar page
+      router.push("/app/calendar");
+    } catch (error) {
+      console.error("Error adding to calendar:", error);
+      alert(error instanceof Error ? error.message : "캘린더에 추가하는데 실패했습니다.");
+    } finally {
+      setIsAddingToCalendar(null);
+    }
   };
 
   if (risks.length === 0) {
@@ -45,21 +105,6 @@ export function RiskAlertBox({ risks }: RiskAlertBoxProps) {
         return "warning";
       default:
         return "info";
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "penalty":
-        return t("penalty");
-      case "benefitCancellation":
-        return t("benefitCancellation");
-      case "eligibilityLoss":
-        return t("eligibilityLoss");
-      case "deadline":
-        return t("deadline");
-      default:
-        return t("critical");
     }
   };
 
@@ -81,11 +126,21 @@ export function RiskAlertBox({ risks }: RiskAlertBoxProps) {
                 </span>
                 <button
                   onClick={() => handleAddToCalendar(risk)}
-                  className="ml-1.5 flex items-center gap-1 px-2 py-0.5 text-[11px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                  disabled={isAddingToCalendar === risk.id}
+                  className="ml-1.5 flex items-center gap-1 px-2 py-0.5 text-[11px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] disabled:opacity-50 disabled:cursor-not-allowed"
                   title="캘린더에 추가"
                 >
-                  <Plus className="h-2.5 w-2.5" />
-                  <span>캘린더에 추가</span>
+                  {isAddingToCalendar === risk.id ? (
+                    <>
+                      <div className="h-2.5 w-2.5 border-2 border-[#2DB7A3] border-t-transparent rounded-full animate-spin" />
+                      <span>추가 중...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-2.5 w-2.5" />
+                      <span>캘린더에 추가</span>
+                    </>
+                  )}
                 </button>
               </div>
             )}

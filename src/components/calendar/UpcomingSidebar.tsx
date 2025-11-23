@@ -44,10 +44,6 @@ export function UpcomingSidebar({
 
   const topEvents = events.slice(0, 3);
 
-  if (topEvents.length === 0) {
-    return null;
-  }
-
   return (
     <Card className="sticky top-4">
       <CardHeader>
@@ -56,36 +52,45 @@ export function UpcomingSidebar({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {topEvents.map((event) => (
-          <button
-            key={event.id}
-            onClick={() => {
-              const eventDate = new Date(event.deadline);
-              onDateClick(eventDate);
-            }}
-            className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <h4 className="font-medium text-[#1A1A1A] dark:text-gray-100 text-sm flex-1 group-hover:text-[#1C2329] dark:group-hover:text-blue-400 transition-colors">
-                {event.title}
-              </h4>
-              <ArrowRight className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <div className="flex items-center gap-3 text-xs text-[#6D6D6D] dark:text-gray-400">
-              <div className={`flex items-center gap-1 ${urgencyColors[event.urgency]}`}>
-                <CalendarIcon className="h-3 w-3" />
-                <span>{formatDate(event.deadline)}</span>
+        {topEvents.length === 0 ? (
+          <div className="py-6 text-center">
+            <CalendarIcon className="h-6 w-6 text-[#6D6D6D] dark:text-gray-400 mx-auto mb-2" />
+            <p className="text-xs text-[#6D6D6D] dark:text-gray-400">
+              등록된 일정이 없습니다
+            </p>
+          </div>
+        ) : (
+          topEvents.map((event) => (
+            <button
+              key={event.id}
+              onClick={() => {
+                const eventDate = new Date(event.deadline);
+                onDateClick(eventDate);
+              }}
+              className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-medium text-[#1A1A1A] dark:text-gray-100 text-sm flex-1 group-hover:text-[#1C2329] dark:group-hover:text-blue-400 transition-colors">
+                  {event.title}
+                </h4>
+                <ArrowRight className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <span className="text-xs font-medium">
-                {formatDeadlineWithDays(event.deadline)}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-[#6D6D6D] dark:text-gray-400">
-              <FileText className="h-3 w-3" />
-              <span className="truncate">{event.documentName}</span>
-            </div>
-          </button>
-        ))}
+              <div className="flex items-center gap-3 text-xs text-[#6D6D6D] dark:text-gray-400">
+                <div className={`flex items-center gap-1 ${urgencyColors[event.urgency]}`}>
+                  <CalendarIcon className="h-3 w-3" />
+                  <span>{formatDate(event.deadline)}</span>
+                </div>
+                <span className="text-xs font-medium">
+                  {formatDeadlineWithDays(event.deadline)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 mt-2 text-xs text-[#6D6D6D] dark:text-gray-400">
+                <FileText className="h-3 w-3" />
+                <span className="truncate">{event.documentName}</span>
+              </div>
+            </button>
+          ))
+        )}
       </CardContent>
     </Card>
   );

@@ -285,7 +285,11 @@ export default function DocumentDetailPage() {
         {/* Right: Analysis Results */}
         <div className="space-y-6">
           {/* Risk Alerts */}
-          <RiskAlertBox risks={document.parsed.risks} />
+          <RiskAlertBox 
+            risks={document.parsed.risks}
+            documentId={document.id}
+            documentName={document.fileName}
+          />
 
           {/* Summary */}
           <SummaryCard summary={document.parsed.summary} />
@@ -313,6 +317,8 @@ export default function DocumentDetailPage() {
           actions={document.parsed.actions}
           onToggleComplete={handleToggleComplete}
           documentText={document.rawText}
+          documentId={document.id}
+          documentName={document.fileName}
         />
       </div>
     </div>

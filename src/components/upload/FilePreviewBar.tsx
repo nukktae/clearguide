@@ -43,16 +43,6 @@ export function FilePreviewBar({
           {fileName}
         </p>
         <p className="text-[13px] text-[#6D6D6D] dark:text-gray-400">{formatFileSize(fileSize)}</p>
-        {progress !== undefined && progress < 100 && (
-          <div className="mt-2">
-            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#2DB7A3] dark:bg-teal-400 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
       {onRemove && (
         <Button

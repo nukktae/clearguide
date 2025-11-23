@@ -171,9 +171,7 @@ export default function CalendarPage() {
             {t("calendar.subtitle")}
           </p>
         </div>
-        {deadlines.length > 0 && (
-          <ViewSelector currentView={currentView} onViewChange={setCurrentView} />
-        )}
+        <ViewSelector currentView={currentView} onViewChange={setCurrentView} />
       </div>
 
       {error && (
@@ -182,19 +180,7 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {deadlines.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <CalendarIcon className="h-12 w-12 text-[#6D6D6D] dark:text-gray-400 mx-auto mb-4" />
-            <p className="text-[#6D6D6D] dark:text-gray-400 mb-2 font-medium">
-              {t("calendar.emptyTitle")}
-            </p>
-            <p className="text-sm text-[#6D6D6D] dark:text-gray-400">
-              {t("calendar.emptySubtitle")}
-            </p>
-          </CardContent>
-        </Card>
-      ) : currentView === "calendar" ? (
+      {currentView === "calendar" ? (
         <CalendarContainer
           events={calendarEvents}
           onViewDetail={handleViewDetail}
@@ -202,6 +188,15 @@ export default function CalendarPage() {
           onEventUpdate={handleEventChange}
           onEventDelete={handleEventChange}
         />
+      ) : deadlines.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <CalendarIcon className="h-8 w-8 text-[#6D6D6D] dark:text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-[#6D6D6D] dark:text-gray-400">
+              등록된 일정이 없습니다
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <DeadlineListView deadlines={deadlines} onItemClick={handleViewDetail} />
       )}

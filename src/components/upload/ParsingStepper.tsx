@@ -23,19 +23,19 @@ export function ParsingStepper({
 }: ParsingStepperProps) {
   return (
     <div className={cn("w-full", className)}>
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex items-start justify-between mb-10">
         {steps.map((step, index) => {
           const isActive = step.status === "active";
           const isCompleted = step.status === "completed";
           const isPending = step.status === "pending";
 
           return (
-            <div key={step.id} className="flex items-center flex-1">
+            <div key={step.id} className="flex items-start flex-1">
               {/* Step Circle */}
-              <div className="flex flex-col items-center flex-1">
+              <div className="flex flex-col items-center flex-1 min-w-0">
                 <div
                   className={cn(
-                    "relative flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all duration-300",
+                    "relative flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-300 shrink-0",
                     isCompleted
                       ? "bg-[#1C2329] dark:bg-blue-500 border-[#1C2329] dark:border-blue-500"
                       : isActive
@@ -44,16 +44,16 @@ export function ParsingStepper({
                   )}
                 >
                   {isCompleted ? (
-                    <Check className="h-3.5 w-3.5 text-white" strokeWidth={1.5} />
+                    <Check className="h-4 w-4 text-white" strokeWidth={2.5} />
                   ) : isActive ? (
-                    <Loader2 className="h-3.5 w-3.5 text-[#1C2329] dark:text-blue-400 animate-spin" strokeWidth={1.5} />
+                    <Loader2 className="h-4 w-4 text-[#1C2329] dark:text-blue-400 animate-spin" strokeWidth={2.5} />
                   ) : (
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                    <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
                   )}
                 </div>
                 <span
                   className={cn(
-                    "mt-4 text-[13.5px] font-medium transition-colors duration-300",
+                    "mt-3 text-[13.5px] font-medium transition-colors duration-300 text-center whitespace-nowrap",
                     isCompleted || isActive
                       ? "text-[#1C2329] dark:text-blue-400"
                       : "text-gray-400 dark:text-gray-500"
@@ -67,7 +67,7 @@ export function ParsingStepper({
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    "h-0.5 flex-1 mx-6 transition-all duration-500",
+                    "h-0.5 flex-1 mx-4 mt-4 transition-all duration-500",
                     isCompleted ? "bg-[#1C2329] dark:bg-blue-500" : "bg-gray-200 dark:bg-gray-700"
                   )}
                 />

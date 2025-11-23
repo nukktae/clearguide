@@ -7,8 +7,10 @@ import { ChecklistItem } from "@/src/lib/parsing/types";
 import { CheckCircle2, Circle, MapPin, Calendar, FileText, Sparkles, ExternalLink, Plus, Phone, Globe } from "lucide-react";
 import { Tag } from "@/src/components/common/Tag";
 import { ShimmerSkeleton } from "@/src/components/common/Skeleton";
+import { Spinner } from "@/src/components/common/Spinner";
 import { generateKakaoMapUrl, extractLocationFromText, getUserLocation, LocationInfo } from "@/src/lib/utils/kakaoMap";
-import { formatDeadlineWithDays, downloadCalendarEvent, parseDeadline, getDeadlineStatus, DeadlineStatus } from "@/src/lib/utils/calendar";
+import { formatDeadlineWithDays, parseDeadline, getDeadlineStatus, DeadlineStatus } from "@/src/lib/utils/calendar";
+import { useRouter } from "next/navigation";
 import { generateCommunityCenterLinks } from "@/src/lib/utils/governmentLinks";
 
 export interface ActionChecklistProps {
@@ -16,6 +18,8 @@ export interface ActionChecklistProps {
   onToggleComplete?: (id: string) => void;
   isLoading?: boolean;
   documentText?: string; // Raw text from document for location extraction
+  documentId?: string; // Document ID for calendar events
+  documentName?: string; // Document name for calendar events
 }
 
 export function ActionChecklist({
@@ -23,10 +27,14 @@ export function ActionChecklist({
   onToggleComplete,
   isLoading = false,
   documentText,
+  documentId,
+  documentName,
 }: ActionChecklistProps) {
   const t = useTranslations("actions");
+  const router = useRouter();
   const [locationInfo, setLocationInfo] = React.useState<LocationInfo | null>(null);
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
+  const [isAddingToCalendar, setIsAddingToCalendar] = React.useState<string | null>(null);
 
   // Extract location from document text on mount
   React.useEffect(() => {
@@ -68,22 +76,59 @@ export function ActionChecklist({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const handleAddToCalendar = (action: ChecklistItem) => {
+  const handleAddToCalendar = async (action: ChecklistItem) => {
     if (!action.deadline) return;
     
     const deadlineDate = parseDeadline(action.deadline);
     if (!deadlineDate) return;
 
-    // Set time to end of day (23:59) for deadline
-    deadlineDate.setHours(23, 59, 0, 0);
+    setIsAddingToCalendar(action.id);
 
-    downloadCalendarEvent({
-      title: action.title,
-      description: action.description || undefined,
-      startDate: deadlineDate,
-      endDate: deadlineDate,
-      location: action.locationName || undefined,
-    });
+    try {
+      // Determine urgency based on deadline status
+      const deadlineStatus = getDeadlineStatus(action.deadline);
+      let urgency: "critical" | "high" | "medium" | "low" | "action" = "action";
+      
+      if (deadlineStatus === "overdue") {
+        urgency = "critical";
+      } else if (deadlineStatus === "soon") {
+        urgency = "high";
+      } else {
+        urgency = "medium";
+      }
+
+      // Format deadline as YYYY-MM-DD
+      const deadlineStr = action.deadline.split("T")[0];
+
+      const response = await fetch("/app/api/calendar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: action.title,
+          description: action.description || undefined,
+          deadline: deadlineStr,
+          urgency: urgency,
+          documentId: documentId,
+          documentName: documentName,
+          type: "action",
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "캘린더에 추가하는데 실패했습니다.");
+      }
+
+      // Redirect to calendar page
+      router.push("/app/calendar");
+    } catch (error) {
+      console.error("Error adding to calendar:", error);
+      alert(error instanceof Error ? error.message : "캘린더에 추가하는데 실패했습니다.");
+    } finally {
+      setIsAddingToCalendar(null);
+    }
   };
 
   const getLocationIcon = (type: string | null | undefined) => {
@@ -223,11 +268,21 @@ export function ActionChecklist({
                       </div>
                       <button
                         onClick={() => handleAddToCalendar(action)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] shrink-0"
+                        disabled={isAddingToCalendar === action.id}
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="캘린더에 추가"
                       >
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>캘린더에 추가</span>
+                        {isAddingToCalendar === action.id ? (
+                          <>
+                            <Spinner size="sm" />
+                            <span>추가 중...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>캘린더에 추가</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   )}
