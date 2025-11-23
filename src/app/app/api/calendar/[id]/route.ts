@@ -23,7 +23,7 @@ export const maxDuration = 60;
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("[API Calendar] ===== GET CALENDAR EVENT REQUEST START =====");
   try {
@@ -31,7 +31,8 @@ export async function GET(
     const userId = await requireAuth(request);
     console.log("[API Calendar] User authenticated:", userId);
     
-    const eventId = params.id;
+    const { id } = await params;
+    const eventId = id;
     console.log("[API Calendar] Fetching event:", eventId);
 
     const event = await getCalendarEventById(eventId, userId);
@@ -97,7 +98,7 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("[API Calendar] ===== UPDATE CALENDAR EVENT REQUEST START =====");
   try {
@@ -105,7 +106,8 @@ export async function PUT(
     const userId = await requireAuth(request);
     console.log("[API Calendar] User authenticated:", userId);
     
-    const eventId = params.id;
+    const { id } = await params;
+    const eventId = id;
     const body = await request.json();
     const {
       title,
@@ -208,7 +210,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log("[API Calendar] ===== DELETE CALENDAR EVENT REQUEST START =====");
   try {
@@ -216,7 +218,8 @@ export async function DELETE(
     const userId = await requireAuth(request);
     console.log("[API Calendar] User authenticated:", userId);
     
-    const eventId = params.id;
+    const { id } = await params;
+    const eventId = id;
     console.log("[API Calendar] Deleting event:", eventId);
 
     await deleteCalendarEvent(eventId, userId);
