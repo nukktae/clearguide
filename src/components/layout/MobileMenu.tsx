@@ -120,14 +120,16 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             })}
           </nav>
 
-          {/* CTA Button */}
-          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-            <Link href="/app" onClick={onClose} className="block">
-              <button className="w-full px-6 py-3 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
-                시작하기
-              </button>
-            </Link>
-          </div>
+          {/* CTA Button - Only show when NOT authenticated */}
+          {!isAuthenticated && (
+            <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+              <Link href="/app" onClick={onClose} className="block">
+                <button className="w-full px-6 py-3 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
+                  시작하기
+                </button>
+              </Link>
+            </div>
+          )}
 
           {/* Language Switcher */}
           <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">

@@ -47,42 +47,47 @@ export function Header() {
       <header className="bg-white dark:bg-[#0F172A] sticky top-0 z-30 border-t border-gray-100 dark:border-gray-800">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <Image
-                src="/images/logos/clearguidelogo.png"
-                alt="클리어가이드"
-                width={32}
-                height={32}
-                className="h-8 w-auto"
-                priority
-              />
-              <h1 className="text-lg font-semibold text-[#1C2329] dark:text-gray-100">
-              {t("navigation.brandName")}
-            </h1>
-          </Link>
+            {/* Left Side: Logo + Navigation */}
+            <div className="flex items-center gap-8">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2 shrink-0">
+                <Image
+                  src="/images/logos/clearguidelogo.png"
+                  alt="클리어가이드"
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto"
+                  priority
+                />
+                {!isAuthenticated && (
+                  <h1 className="text-lg font-semibold text-[#1C2329] dark:text-gray-100">
+                    {t("navigation.brandName")}
+                  </h1>
+                )}
+              </Link>
 
-            {/* Desktop Navigation - Only show when authenticated */}
-            {isAuthenticated && (
-              <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center px-6">
-                {navItems.map((item) => {
-                  const active = isActive(item.href);
-                  return (
-                    <Link 
-                      key={item.href}
-                      href={item.href}
-                      className={`text-sm font-medium transition-colors ${
-                        active
-                          ? "text-[#1C2329] dark:text-blue-400"
-                          : "text-[#1C2329] dark:text-gray-400 hover:text-[#1C2329] dark:hover:text-gray-100"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </nav>
-            )}
+              {/* Desktop Navigation - Only show when authenticated */}
+              {isAuthenticated && (
+                <nav className="hidden lg:flex items-center gap-6">
+                  {navItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link 
+                        key={item.href}
+                        href={item.href}
+                        className={`text-sm font-medium transition-colors ${
+                          active
+                            ? "text-[#1C2329] dark:text-blue-400"
+                            : "text-[#1C2329] dark:text-gray-400 hover:text-[#1C2329] dark:hover:text-gray-100"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+              )}
+            </div>
 
             {/* Right Side: Language Switcher, CTA Button, Account Dropdown */}
             <div className="flex items-center gap-3 shrink-0">
@@ -91,14 +96,16 @@ export function Header() {
               <LanguageSwitcher />
               </div>
               
-              {/* CTA Button */}
-              <div className="hidden md:block">
-                <Link href="/app">
-                  <button className="px-5 py-2 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-xs font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
-                    시작하기
-                  </button>
-                </Link>
-              </div>
+              {/* CTA Button - Only show when NOT authenticated */}
+              {!isAuthenticated && (
+                <div className="hidden md:block">
+                  <Link href="/app">
+                    <button className="px-5 py-2 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-xs font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
+                      시작하기
+                    </button>
+                  </Link>
+                </div>
+              )}
               
               {/* Account Dropdown - Desktop - Only show when authenticated */}
               {isAuthenticated && (
