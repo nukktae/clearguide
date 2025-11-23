@@ -46,6 +46,8 @@ export async function signUpEmailPassword(
   // Update display name if provided
   if (displayName && userCredential.user) {
     await updateProfile(userCredential.user, { displayName });
+    // Force token refresh to include updated displayName
+    await userCredential.user.getIdToken(true);
   }
   
   return userCredential;

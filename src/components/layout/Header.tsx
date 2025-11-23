@@ -33,6 +33,10 @@ export function Header() {
       label: t("navigation.myCalendar"),
       href: "/app/calendar",
     },
+    {
+      label: "내 프로필",
+      href: "/app/account",
+    },
   ];
 
   const isActive = (href: string) => {

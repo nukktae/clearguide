@@ -43,7 +43,14 @@ export default function SignUpPage() {
     
     try {
       const userCredential = await signUpEmailPassword(email, password, name);
-      const idToken = await userCredential.user.getIdToken();
+      // Force refresh token to ensure it includes the updated displayName
+      const idToken = await userCredential.user.getIdToken(true);
+      
+      console.log("[Signup] User created:", {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName,
+      });
       
       // Set auth cookie with Firebase token
       document.cookie = `clearguide_auth=${idToken}; path=/; max-age=86400; SameSite=Lax`; // 24 hours

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/src/components/common/Button";
 import { User, Mail, Phone, Calendar, Lock, Edit2 } from "lucide-react";
+import Image from "next/image";
 
 interface BaseInfoCardProps {
   userName: string;
@@ -11,6 +12,7 @@ interface BaseInfoCardProps {
   userPhone: string;
   accountCreated: string;
   loginMethod: string;
+  photoURL?: string | null;
   onEditName?: () => void;
   onEditEmail?: () => void;
   onEditPhone?: () => void;
@@ -23,6 +25,7 @@ export function BaseInfoCard({
   userPhone,
   accountCreated,
   loginMethod,
+  photoURL,
   onEditName,
   onEditEmail,
   onEditPhone,
@@ -36,13 +39,24 @@ export function BaseInfoCard({
       <div className="space-y-4">
         {/* Avatar */}
         <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div className="w-16 h-16 rounded-full bg-[#F4F6F9] dark:bg-gray-700 flex items-center justify-center text-xl font-semibold text-[#1C2329] dark:text-gray-200">
-            {userName.charAt(0)}
+          <div className="w-16 h-16 rounded-full bg-[#F4F6F9] dark:bg-gray-700 flex items-center justify-center text-xl font-semibold text-[#1C2329] dark:text-gray-200 overflow-hidden">
+            {photoURL ? (
+              <Image
+                src={photoURL}
+                alt={userName}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
+            ) : (
+              userName.charAt(0)
+            )}
           </div>
           <div>
             <p className="text-sm text-[#6D6D6D] dark:text-gray-400 mb-1">{t("baseInfo.profilePicture")}</p>
             <Button variant="outline" size="sm" onClick={onEditAvatar}>
-              {t("baseInfo.change")}
+              {photoURL ? t("baseInfo.change") : "추가"}
             </Button>
           </div>
         </div>
