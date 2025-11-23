@@ -75,7 +75,7 @@ export function DocumentSidebar({
               className={cn(
                 "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
                 isActive
-                  ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100 font-medium"
+                  ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100 font-medium"
                   : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#1A1A1A] dark:hover:text-gray-100"
               )}
             >

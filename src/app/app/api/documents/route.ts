@@ -1,29 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getAllDocuments,
+  getAllUserDocuments,
   saveDocument,
-} from "@/src/lib/storage/documents";
+} from "@/src/lib/firebase/firestore-documents";
 import { DocumentRecord, ParsedDocument } from "@/src/lib/parsing/types";
+import { requireAuth } from "@/src/lib/auth/api-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  console.log("[API Documents] ===== GET ALL DOCUMENTS REQUEST START =====");
   try {
-    const documents = await getAllDocuments();
+    // Require authentication and get userId
+    const userId = await requireAuth(request);
+    console.log("[API Documents] User authenticated:", userId);
     
-    // Return documents sorted by upload date (newest first)
-    const sorted = documents.sort(
-      (a, b) =>
-        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    );
+    // Get user's documents from Firestore
+    console.log("[API Documents] Fetching user documents...");
+    const documents = await getAllUserDocuments(userId);
+    console.log("[API Documents] Documents fetched:", {
+      count: documents.length,
+      documentIds: documents.map(d => d.id),
+    });
 
+    console.log("[API Documents] ===== GET ALL DOCUMENTS SUCCESS =====");
     return NextResponse.json({
       success: true,
-      documents: sorted,
-      count: sorted.length,
+      documents,
+      count: documents.length,
     });
   } catch (error) {
-    console.error("Get documents error:", error);
+    console.error("[API Documents] Get documents error:", error);
+    console.error("[API] Error details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+    
+    // Check if it's a permissions error
+    if (error instanceof Error && (error.message.includes("permission") || error.message.includes("Missing"))) {
+      return NextResponse.json(
+        {
+          error: "Firestore 권한 오류가 발생했습니다.",
+          details: "Firestore 보안 규칙을 배포했는지 확인하세요. 또는 테스트 모드로 설정되어 있는지 확인하세요.",
+          hint: "Firebase Console → Firestore → Rules에서 규칙을 배포하세요."
+        },
+        { status: 403 }
+      );
+    }
+    
     return NextResponse.json(
       {
         error: "문서 목록을 가져오는 중 오류가 발생했습니다.",
@@ -35,9 +67,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[API Documents] ===== SAVE DOCUMENT REQUEST START =====");
   try {
+    // Require authentication and get userId
+    const userId = await requireAuth(request);
+    console.log("[API Documents] User authenticated:", userId);
+    
     const body = await request.json();
     const { document, parsedDocument } = body;
+    console.log("[API Documents] Request body:", {
+      documentId: document?.id,
+      hasParsed: !!parsedDocument,
+      hasSummary: !!parsedDocument?.summary,
+      hasActions: !!parsedDocument?.actions,
+    });
 
     if (!document) {
       return NextResponse.json(
@@ -51,14 +94,30 @@ export async function POST(request: NextRequest) {
       parsed: parsedDocument as ParsedDocument | undefined,
     };
 
-    const saved = await saveDocument(documentRecord);
+    // Save to Firestore with userId
+    console.log("[API Documents] Saving document to Firestore...");
+    const saved = await saveDocument(documentRecord, userId);
+    console.log("[API Documents] Document saved:", {
+      documentId: saved.id,
+      hasParsed: !!saved.parsed,
+    });
 
+    console.log("[API Documents] ===== SAVE DOCUMENT SUCCESS =====");
     return NextResponse.json({
       success: true,
       document: saved,
     });
   } catch (error) {
     console.error("Save document error:", error);
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       {
         error: "문서 저장 중 오류가 발생했습니다.",

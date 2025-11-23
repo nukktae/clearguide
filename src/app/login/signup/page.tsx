@@ -122,46 +122,48 @@ export default function SignUpPage() {
     }
   };
 
+  const handleKakaoSignIn = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("[Signup Page] Kakao sign-in button clicked");
+    setError(null);
+    setIsLoading(true);
+    
+    // Redirect to Kakao login endpoint using replace to avoid back button issues
+    console.log("[Signup Page] Redirecting to /api/auth/kakao/login");
+    window.location.replace("/api/auth/kakao/login");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-white flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-[420px]">
-        {/* Card with animation */}
-        <div
-          className={`bg-white rounded-2xl shadow-[0_8px_20px_rgba(0,0,0,0.08)] p-8 border border-[#ECEEF3] transition-all duration-500 ${
-            mounted
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-1"
-          }`}
-        >
+    <div className="min-h-screen bg-white flex">
+      {/* Left Side - Signup Form */}
+      <div className="flex-1 flex items-center justify-center pl-8 lg:pl-16 xl:pl-24 pr-8 lg:pr-12 xl:pr-16 py-16">
+        <div className={`w-full max-w-[400px] transition-all duration-500 ${
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        }`}>
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-              <Image
-                src="/images/logos/clearguidelogo.png"
-                alt="클리어가이드"
-                width={64}
-                height={64}
-                className="w-full h-full object-contain"
-                unoptimized
-              />
-            </div>
-            <h1 className="text-[24px] font-semibold text-[#1A1A1A] mb-2">
+          <div className="mb-8">
+            <h1 className="text-3xl lg:text-4xl font-bold text-[#1C2329] mb-3">
               계정 만들기
             </h1>
+            <p className="text-base text-[#4E535A] leading-relaxed">
+              공공문서를 쉽게 이해하고 관리하세요. 무료로 시작하세요.
+            </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-[13px] font-medium text-[#0A1A2F] mb-1.5">
+              <label htmlFor="name" className="block text-sm font-medium text-[#1C2329] mb-2">
                 이름
               </label>
               <Input
@@ -175,13 +177,14 @@ export default function SignUpPage() {
                 }}
                 required
                 disabled={isLoading}
+                className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-[#0A1A2F] mb-1.5">
-                이메일
+              <label htmlFor="email" className="block text-sm font-medium text-[#1C2329] mb-2">
+                이메일 주소
               </label>
               <Input
                 id="email"
@@ -194,12 +197,13 @@ export default function SignUpPage() {
                 }}
                 required
                 disabled={isLoading}
+                className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-[13px] font-medium text-[#0A1A2F] mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-[#1C2329] mb-2">
                 비밀번호
               </label>
               <Input
@@ -214,27 +218,33 @@ export default function SignUpPage() {
                 required
                 disabled={isLoading}
                 minLength={6}
+                className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
             </div>
 
             {/* Terms Agreement */}
-            <div className="pt-2">
-              <Checkbox
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => {
                   setAgreedToTerms(e.target.checked);
                   setError(null);
                 }}
-                label="이용약관 및 개인정보처리방침에 동의합니다"
                 disabled={isLoading}
+                className="w-4 h-4 rounded border-gray-300 text-[#1C2329] focus:ring-[#1C2329] mt-0.5"
               />
+              <label htmlFor="terms" className="text-sm text-[#4E535A] cursor-pointer">
+                이용약관 및 개인정보처리방침에 동의합니다
+              </label>
             </div>
 
             {/* Submit Button */}
-            <Button
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-[50px] text-[14px] font-bold"
+              className="w-full h-12 bg-[#1C2329] text-white rounded-lg font-medium hover:bg-[#2A3441] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -244,67 +254,93 @@ export default function SignUpPage() {
               ) : (
                 "무료로 시작하기"
               )}
-            </Button>
+            </button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-[12px] text-[#9CA3AF]">또는</span>
+              <span className="bg-white px-4 text-sm text-[#9CA3AF]">또는 다음으로 가입</span>
             </div>
           </div>
 
-          {/* Google Sign Up */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-white border border-gray-300 text-[14px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          {/* Social Sign Up */}
+          <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Google로 가입하기
+            </button>
+            <a
+              href="/api/auth/kakao/login"
+              onClick={(e) => {
+                console.log("[Signup Page] Kakao link clicked");
+                if (isLoading) {
+                  e.preventDefault();
+                  return false;
+                }
+              }}
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm no-underline"
+            >
+              <Image
+                src="/images/logos/kakaotalk-logo.png"
+                alt="KakaoTalk"
+                width={20}
+                height={20}
+                className="h-5 w-5"
               />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Google로 계정 만들기
-          </button>
-
-          {/* Reassurance Text */}
-          <p className="text-[12px] text-[#9CA3AF] text-center mt-6 leading-relaxed">
-            개인정보는 저장되지 않으며, 문서 분석은 사용자가 100% 통제합니다.
-          </p>
+              카카오로 가입하기
+            </a>
+          </div>
 
           {/* Back to Login */}
-          <div className="mt-6 text-center">
-            <Link
-              href="/login"
-              className="text-[13px] text-[#6D6D6D] hover:text-[#0A1A2F] transition-colors"
-            >
-              이미 계정이 있으신가요? 로그인
-            </Link>
+          <div className="mt-8 text-center">
+            <p className="text-sm text-[#4E535A]">
+              이미 계정이 있으신가요?{" "}
+              <Link href="/login" className="text-[#1C2329] font-medium hover:underline">
+                로그인
+              </Link>
+            </p>
           </div>
         </div>
+      </div>
 
-        {/* Security Reassurance */}
-        <p className="text-[11px] text-[#9CA3AF] text-center mt-6 max-w-[420px] mx-auto leading-relaxed">
-          AI 분석은 서버에 저장되지 않으며, 모든 문서는 사용자 기기에만 보관됩니다.
-        </p>
+      {/* Right Side - Image */}
+      <div className="hidden lg:flex flex-1 items-center justify-start bg-white pl-8 xl:pl-12 py-16">
+        <div className="relative w-full h-full max-w-xl">
+          <Image
+            src="/images/this.png"
+            alt="Signup illustration"
+            fill
+            className="object-contain"
+            priority
+            unoptimized
+          />
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
 import { EventPopover } from "./EventPopover";
 import { UpcomingSidebar } from "./UpcomingSidebar";
+import { CalendarEventForm } from "./CalendarEventForm";
 
 interface CalendarContainerProps {
   events: Array<{
@@ -15,13 +16,20 @@ interface CalendarContainerProps {
     documentName: string;
     documentId: string;
     description?: string;
+    type?: "custom" | "action" | "risk";
   }>;
   onViewDetail: (documentId: string) => void;
+  onEventCreate?: () => void;
+  onEventUpdate?: () => void;
+  onEventDelete?: () => void;
 }
 
 export function CalendarContainer({
   events,
   onViewDetail,
+  onEventCreate,
+  onEventUpdate,
+  onEventDelete,
 }: CalendarContainerProps) {
   const [currentDate, setCurrentDate] = React.useState(new Date());
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
@@ -30,6 +38,9 @@ export function CalendarContainer({
     left: number;
   } | null>(null);
   const [isMobile, setIsMobile] = React.useState(false);
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
+  const [formInitialDate, setFormInitialDate] = React.useState<Date | undefined>();
+  const [editingEvent, setEditingEvent] = React.useState<typeof events[0] | null>(null);
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -57,6 +68,14 @@ export function CalendarContainer({
     const dateKey = date.toISOString().split("T")[0];
     const dayEvents = eventsByDate.get(dateKey) || [];
 
+    // Double click to add event
+    if (event.detail === 2 && dayEvents.length === 0) {
+      setFormInitialDate(date);
+      setEditingEvent(null);
+      setIsFormOpen(true);
+      return;
+    }
+
     if (dayEvents.length === 0) return;
 
     setSelectedDate(date);
@@ -76,6 +95,107 @@ export function CalendarContainer({
       });
     }
   }, [eventsByDate, isMobile]);
+
+  const handleCreateEvent = async (eventData: {
+    title: string;
+    description?: string;
+    deadline: string;
+    urgency: "critical" | "high" | "medium" | "low" | "action";
+    documentId?: string;
+    documentName?: string;
+    type?: "custom" | "action" | "risk";
+    severity?: "low" | "medium" | "high" | "critical";
+  }) => {
+    try {
+      const response = await fetch("/app/api/calendar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "이벤트 생성에 실패했습니다.");
+      }
+
+      if (onEventCreate) {
+        onEventCreate();
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleUpdateEvent = async (eventData: {
+    title: string;
+    description?: string;
+    deadline: string;
+    urgency: "critical" | "high" | "medium" | "low" | "action";
+    documentId?: string;
+    documentName?: string;
+    type?: "custom" | "action" | "risk";
+    severity?: "low" | "medium" | "high" | "critical";
+  }) => {
+    if (!editingEvent) return;
+
+    try {
+      // Extract event ID (format: custom-{id} or action-{docId}-{actionId})
+      const eventId = editingEvent.id.startsWith("custom-")
+        ? editingEvent.id.replace("custom-", "")
+        : null;
+
+      if (!eventId) {
+        throw new Error("이 이벤트는 수정할 수 없습니다.");
+      }
+
+      const response = await fetch(`/app/api/calendar/${eventId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "이벤트 수정에 실패했습니다.");
+      }
+
+      if (onEventUpdate) {
+        onEventUpdate();
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    // Extract event ID (format: custom-{id})
+    const id = eventId.startsWith("custom-") ? eventId.replace("custom-", "") : null;
+
+    if (!id) {
+      throw new Error("이 이벤트는 삭제할 수 없습니다.");
+    }
+
+    try {
+      const response = await fetch(`/app/api/calendar/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "이벤트 삭제에 실패했습니다.");
+      }
+
+      if (onEventDelete) {
+        onEventDelete();
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const handlePreviousMonth = () => {
     setCurrentDate(
@@ -105,6 +225,11 @@ export function CalendarContainer({
         onPreviousMonth={handlePreviousMonth}
         onNextMonth={handleNextMonth}
         onToday={handleToday}
+        onAddEvent={() => {
+          setFormInitialDate(undefined);
+          setEditingEvent(null);
+          setIsFormOpen(true);
+        }}
       />
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-3">
@@ -147,11 +272,39 @@ export function CalendarContainer({
             date={selectedDate}
             onClose={() => setSelectedDate(null)}
             onViewDetail={onViewDetail}
+            onEdit={(event) => {
+              setEditingEvent(event);
+              setFormInitialDate(new Date(event.deadline));
+              setIsFormOpen(true);
+              setSelectedDate(null);
+            }}
+            onDelete={handleDeleteEvent}
             position={popoverPosition || undefined}
             isMobile={isMobile}
           />
         </>
       )}
+
+      <CalendarEventForm
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingEvent(null);
+          setFormInitialDate(undefined);
+        }}
+        onSubmit={editingEvent ? handleUpdateEvent : handleCreateEvent}
+        initialDate={formInitialDate}
+        initialEvent={editingEvent ? {
+          id: editingEvent.id,
+          title: editingEvent.title,
+          description: editingEvent.description,
+          deadline: editingEvent.deadline,
+          urgency: editingEvent.urgency,
+          documentId: editingEvent.documentId,
+          documentName: editingEvent.documentName,
+          type: editingEvent.type,
+        } : undefined}
+      />
     </div>
   );
 }

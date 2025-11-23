@@ -32,6 +32,13 @@ export interface ChecklistItem {
   requiredDocs?: string[];
   notes?: string;
   completed?: boolean;
+  websiteUrl?: string; // URL for online actions
+  bankAccount?: {
+    accountHolder?: string; // 예금주
+    bankName?: string; // 은행명
+    accountNumber?: string; // 계좌번호
+    giroNumber?: string; // 지로번호
+  };
 }
 
 export interface RiskAlert {

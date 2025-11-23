@@ -198,7 +198,7 @@ export function ChatInput({
               "w-full px-4 py-2.5 pr-12 rounded-full border border-[#E5E7EB] dark:border-gray-700",
               "bg-white dark:bg-gray-800 text-[#1A1A1A] dark:text-gray-100 text-sm",
               "placeholder:text-[#9CA3AF] dark:placeholder:text-gray-500 placeholder:text-sm",
-              "focus:outline-none focus:ring-2 focus:ring-[#1A2A4F] dark:focus:ring-blue-500",
+              "focus:outline-none focus:ring-2 focus:ring-[#1C2329] dark:focus:ring-blue-500",
               "shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.2)]",
               "shadow-sm",
               (disabled || isListening) && "opacity-50 cursor-not-allowed"
@@ -226,7 +226,7 @@ export function ChatInput({
           className={cn(
             "p-2.5 rounded-full transition-colors shrink-0 shadow-sm",
             value.trim() && !disabled && !isListening
-              ? "bg-[#1A2A4F] dark:bg-blue-600 text-white hover:bg-[#1A3A5F] dark:hover:bg-blue-700"
+              ? "bg-[#1C2329] dark:bg-blue-600 text-white hover:bg-[#1A3A5F] dark:hover:bg-blue-700"
               : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
           )}
           aria-label="전송"

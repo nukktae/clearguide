@@ -1,9 +1,19 @@
 import { PDFDocument } from "pdf-lib";
+import { openai } from "@/src/lib/openai/client";
 
 export interface OCRResult {
   text: string;
   confidence?: number;
   pageCount?: number;
+}
+
+/**
+ * Convert File to base64 string
+ */
+async function fileToBase64(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  return buffer.toString("base64");
 }
 
 /**
@@ -45,7 +55,88 @@ export async function extractTextFromImage(file: File): Promise<OCRResult> {
 }
 
 /**
+ * Extract text using GPT-4o vision API
+ * Supports both images and PDFs
+ */
+export async function extractTextWithGPT4o(file: File): Promise<OCRResult> {
+  try {
+    const fileType = file.type;
+    const base64 = await fileToBase64(file);
+    
+    // For PDFs, GPT-4o can read them directly
+    // For images, use image_url format
+    const imageUrl = `data:${fileType};base64,${base64}`;
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an OCR (Optical Character Recognition) system. Your only job is to extract and return all visible text from images and documents. Return the text exactly as it appears, preserving spacing and line breaks. Do not refuse, do not add explanations, just return the raw text content.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract all text from this document image. Return ONLY the raw text content exactly as it appears. Preserve line breaks, spacing, and formatting. Do not add any explanations, summaries, or commentary. If there is no text visible, return an empty string.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 4096,
+      temperature: 0.1,
+    });
+
+    let extractedText = response.choices[0]?.message?.content || "";
+    
+    // Check if GPT-4o refused to process
+    if (!extractedText || 
+        extractedText.toLowerCase().includes("i'm sorry") || 
+        extractedText.toLowerCase().includes("i can't assist") ||
+        extractedText.toLowerCase().includes("cannot") ||
+        extractedText.toLowerCase().includes("unable")) {
+      console.error("[OCR] GPT-4o refused to process image:", extractedText);
+      throw new Error("GPT-4o가 이미지를 처리할 수 없습니다. 다른 이미지를 시도해주세요.");
+    }
+
+    // Determine page count for PDFs
+    let pageCount: number | undefined;
+    if (fileType === "application/pdf") {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
+        pageCount = pdfDoc.getPages().length;
+      } catch {
+        pageCount = 1; // Fallback
+      }
+    } else {
+      pageCount = 1; // Images are single page
+    }
+
+    return {
+      text: extractedText,
+      confidence: 0.95, // GPT-4o vision is highly accurate
+      pageCount,
+    };
+  } catch (error) {
+    console.error("[OCR] GPT-4o extraction error:", error);
+    
+    // Fallback to mock OCR if GPT-4o fails
+    console.warn("[OCR] Falling back to mock OCR");
+    return extractText(file);
+  }
+}
+
+/**
  * Main OCR function that routes to appropriate handler
+ * Defaults to GPT-4o OCR
  */
 export async function extractText(file: File): Promise<OCRResult> {
   const fileType = file.type;

@@ -3,12 +3,19 @@
 /* Ensure dark mode is enabled for Tailwind v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* BATANG Font Face */
+@font-face {
+  font-family: "Batang";
+  src: url("/font/BATANG.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #1A1A1A;
   
   /* Brand Colors */
-  --primary-navy: #1A2A4F;
+  --primary-navy: #1C2329;
   --secondary-teal: #2DB7A3;
   --accent-amber: #F2B84B;
   --bg-light: #F4F6F9;
@@ -43,13 +50,13 @@
   --color-text-headline: var(--text-headline);
   --color-text-body: var(--text-body);
   --color-text-subtext: var(--text-subtext);
-  --font-sans: var(--font-pretendard);
+  --font-sans: var(--font-batang);
 }
 
 body {
-  background: var(--bg-light);
+  background: #FFFFFF;
   color: var(--text-body);
-  font-family: var(--font-pretendard), "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-batang), "Batang", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: calc(15px * var(--font-size-multiplier));
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;

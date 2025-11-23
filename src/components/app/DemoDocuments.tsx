@@ -30,7 +30,7 @@ export function DemoDocuments({ disabled = false }: DemoDocumentsProps) {
               className={cn(
                 "group relative p-5 rounded-[14px] border border-gray-200 dark:border-gray-700",
                 "bg-white dark:bg-[#1E293B]",
-                "hover:border-[#1A2A4F] dark:hover:border-blue-500 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
+                "hover:border-[#1C2329] dark:hover:border-blue-500 hover:shadow-[0_2px_8px_rgba(0,0,0,0.08)]",
                 "transition-all min-w-[180px]",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
@@ -46,7 +46,7 @@ export function DemoDocuments({ disabled = false }: DemoDocumentsProps) {
                   <p className="text-xs text-[#6D6D6D] dark:text-gray-400 mb-2">
                     {demo.subtitle}
                   </p>
-                  <div className="flex items-center justify-center gap-1 text-xs text-[#1A2A4F] dark:text-blue-400 group-hover:gap-1.5 transition-all">
+                  <div className="flex items-center justify-center gap-1 text-xs text-[#1C2329] dark:text-blue-400 group-hover:gap-1.5 transition-all">
                     <span>바로 체험하기</span>
                     <ArrowRight className="h-3 w-3" />
                   </div>

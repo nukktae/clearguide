@@ -166,7 +166,7 @@ export function PDFViewer({
               className={cn(
                 "px-2.5 py-1 text-xs rounded-md transition-colors",
                 activeHighlightType === "all"
-                  ? "bg-[#1A2A4F] text-white"
+                  ? "bg-[#1C2329] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               )}
             >
@@ -183,7 +183,7 @@ export function PDFViewer({
                     className={cn(
                       "px-2.5 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5",
                       activeHighlightType === type
-                        ? "bg-[#1A2A4F] text-white"
+                        ? "bg-[#1C2329] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     )}
                   >

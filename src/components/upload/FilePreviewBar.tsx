@@ -35,7 +35,7 @@ export function FilePreviewBar({
     >
       <div className="shrink-0">
         <div className="rounded bg-[#F4F6F9] dark:bg-gray-800 p-1.5">
-          <File className="h-4 w-4 text-[#1A2A4F] dark:text-blue-400" strokeWidth={1.5} />
+          <File className="h-4 w-4 text-[#1C2329] dark:text-blue-400" strokeWidth={1.5} />
         </div>
       </div>
       <div className="flex-1 min-w-0">

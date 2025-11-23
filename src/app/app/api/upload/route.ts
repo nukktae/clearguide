@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractText } from "@/src/lib/ocr/ocrClient";
 import { v4 as uuidv4 } from "uuid";
 import { saveUploadedFile } from "@/src/lib/storage/files";
+import { requireAuth } from "@/src/lib/auth/api-auth";
+import { saveDocument } from "@/src/lib/firebase/firestore-documents";
+import type { DocumentRecord } from "@/src/lib/parsing/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
+  console.log("[API Upload] ===== UPLOAD REQUEST START =====");
   try {
+    // Require authentication
+    const userId = await requireAuth(request);
+    console.log("[API Upload] User authenticated:", userId);
+    
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    console.log("[API Upload] File received:", {
+      name: file?.name,
+      type: file?.type,
+      size: file?.size,
+    });
 
     if (!file) {
       return NextResponse.json(
@@ -18,11 +30,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (20MB max for GPT-4o vision)
+    const maxSize = 20 * 1024 * 1024; // 20MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "파일 크기는 10MB를 초과할 수 없습니다." },
+        { error: "파일 크기는 20MB를 초과할 수 없습니다." },
         { status: 400 }
       );
     }
@@ -45,31 +57,41 @@ export async function POST(request: NextRequest) {
     const documentId = uuidv4();
     const savedFileName = await saveUploadedFile(file, documentId);
 
-    // Extract text using OCR
-    const ocrResult = await extractText(file);
-
-    // Create document record
-    const document = {
+    // Create document record (without OCR - OCR is separate endpoint)
+    const documentRecord: DocumentRecord = {
       id: documentId,
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
       uploadedAt: new Date().toISOString(),
-      rawText: ocrResult.text,
       filePath: savedFileName,
     };
 
+    // Automatically save to Firestore
+    console.log("[API Upload] Saving document to Firestore...");
+    const savedDocument = await saveDocument(documentRecord, userId);
+    console.log("[API Upload] Document saved successfully:", {
+      documentId: savedDocument.id,
+      fileName: savedDocument.fileName,
+    });
+
+    console.log("[API Upload] ===== UPLOAD SUCCESS =====");
     return NextResponse.json({
-      documentId,
-      document,
-      ocrResult: {
-        text: ocrResult.text,
-        confidence: ocrResult.confidence,
-        pageCount: ocrResult.pageCount,
-      },
+      success: true,
+      documentId: savedDocument.id,
+      document: savedDocument,
     });
   } catch (error) {
     console.error("Upload error:", error);
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       {
         error: "파일 업로드 중 오류가 발생했습니다.",

@@ -81,7 +81,7 @@ export function RiskAlertBox({ risks }: RiskAlertBoxProps) {
                 </span>
                 <button
                   onClick={() => handleAddToCalendar(risk)}
-                  className="ml-1.5 flex items-center gap-1 px-2 py-0.5 text-[11px] text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                  className="ml-1.5 flex items-center gap-1 px-2 py-0.5 text-[11px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
                   title="캘린더에 추가"
                 >
                   <Plus className="h-2.5 w-2.5" />

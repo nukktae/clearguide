@@ -51,7 +51,7 @@ export function EmptyChatState({ onStartDocumentAnalysis }: EmptyChatStateProps)
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center">
       <div className="rounded-full bg-blue-50 dark:bg-blue-900/20 p-4 mb-4">
-        <Sparkles className="h-8 w-8 text-[#1A2A4F] dark:text-blue-400" />
+        <Sparkles className="h-8 w-8 text-[#1C2329] dark:text-blue-400" />
       </div>
       <h3 className="text-lg font-semibold text-[#1A1A1A] dark:text-gray-100 mb-2">
         ClearGuide AI가 할 수 있는 것들
@@ -68,7 +68,7 @@ export function EmptyChatState({ onStartDocumentAnalysis }: EmptyChatStateProps)
               className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-left"
             >
               <div className="shrink-0 mt-0.5">
-                <Icon className="h-5 w-5 text-[#1A2A4F] dark:text-blue-400" />
+                <Icon className="h-5 w-5 text-[#1C2329] dark:text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-medium text-[#1A1A1A] dark:text-gray-100 mb-1">

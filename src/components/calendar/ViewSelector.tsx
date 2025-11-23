@@ -22,7 +22,7 @@ export function ViewSelector({ currentView, onViewChange }: ViewSelectorProps) {
         className={cn(
           "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
           currentView === "calendar"
-            ? "bg-white dark:bg-gray-700 text-[#1A2A4F] dark:text-gray-100 shadow-sm"
+            ? "bg-white dark:bg-gray-700 text-[#1C2329] dark:text-gray-100 shadow-sm"
             : "text-[#6D6D6D] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-gray-200"
         )}
       >
@@ -34,7 +34,7 @@ export function ViewSelector({ currentView, onViewChange }: ViewSelectorProps) {
         className={cn(
           "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
           currentView === "list"
-            ? "bg-white dark:bg-gray-700 text-[#1A2A4F] dark:text-gray-100 shadow-sm"
+            ? "bg-white dark:bg-gray-700 text-[#1C2329] dark:text-gray-100 shadow-sm"
             : "text-[#6D6D6D] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-gray-200"
         )}
       >

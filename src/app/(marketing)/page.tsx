@@ -9,7 +9,7 @@ export default function MarketingPage() {
   const t = useTranslations("upload");
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FFFFFF]">
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto text-center">
@@ -31,14 +31,14 @@ export default function MarketingPage() {
       </div>
 
       {/* Features Section */}
-      <div className="bg-[#F4F6F9] py-16">
+      <div className="bg-[#FFFFFF] py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center text-[#1A1A1A] mb-12">
               주요 기능
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white p-6 rounded-lg">
+              <div className="bg-[#F8F8F9] p-6 rounded-lg">
                 <div className="w-12 h-12 rounded-lg bg-[#2DB7A3]/10 flex items-center justify-center mb-4">
                   <FileText className="h-6 w-6 text-[#2DB7A3]" />
                 </div>
@@ -50,7 +50,7 @@ export default function MarketingPage() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-lg">
+              <div className="bg-[#F8F8F9] p-6 rounded-lg">
                 <div className="w-12 h-12 rounded-lg bg-[#2DB7A3]/10 flex items-center justify-center mb-4">
                   <CheckCircle2 className="h-6 w-6 text-[#2DB7A3]" />
                 </div>
@@ -62,7 +62,7 @@ export default function MarketingPage() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-lg">
+              <div className="bg-[#F8F8F9] p-6 rounded-lg">
                 <div className="w-12 h-12 rounded-lg bg-[#F2B84B]/10 flex items-center justify-center mb-4">
                   <AlertTriangle className="h-6 w-6 text-[#F2B84B]" />
                 </div>
@@ -74,7 +74,7 @@ export default function MarketingPage() {
                 </p>
               </div>
 
-              <div className="bg-white p-6 rounded-lg">
+              <div className="bg-[#F8F8F9] p-6 rounded-lg">
                 <div className="w-12 h-12 rounded-lg bg-[#2DB7A3]/10 flex items-center justify-center mb-4">
                   <Calendar className="h-6 w-6 text-[#2DB7A3]" />
                 </div>

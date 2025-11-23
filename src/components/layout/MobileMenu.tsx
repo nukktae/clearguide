@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, FileText, FolderOpen, Calendar, User } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -15,8 +16,12 @@ interface MobileMenuProps {
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const t = useTranslations();
   const pathname = usePathname();
+  const { user, kakaoUser } = useAuth();
+  
+  // Check if user is authenticated
+  const isAuthenticated = !!user || !!kakaoUser;
 
-  const navItems = [
+  const baseNavItems = [
     {
       label: t("mobileMenu.documentAnalysis"),
       href: "/app",
@@ -32,12 +37,17 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       href: "/app/calendar",
       icon: Calendar,
     },
-    {
-      label: t("mobileMenu.account"),
-      href: "/app/account",
-      icon: User,
-    },
   ];
+
+  const accountNavItem = {
+    label: t("mobileMenu.account"),
+    href: "/app/account",
+    icon: User,
+  };
+
+  const navItems = isAuthenticated 
+    ? [...baseNavItems, accountNavItem]
+    : baseNavItems;
 
   const isActive = (href: string) => {
     if (href === "/app") {
@@ -97,18 +107,27 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors font-bold ${
                     active
-                      ? "bg-[#0A1A2F]/10 dark:bg-blue-900/30 text-[#0A1A2F] dark:text-blue-400 font-medium"
-                      : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0A1A2F] dark:hover:text-gray-100"
+                      ? "bg-[#0A1A2F]/10 dark:bg-blue-900/30 text-[#1C2329] dark:text-blue-400"
+                      : "text-[#1C2329] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-[#0A1A2F] dark:hover:text-gray-100"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
-                  <span className="text-sm">{item.label}</span>
+                  <span className="text-base">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
+
+          {/* CTA Button */}
+          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <Link href="/app" onClick={onClose} className="block">
+              <button className="w-full px-6 py-3 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
+                시작하기
+              </button>
+            </Link>
+          </div>
 
           {/* Language Switcher */}
           <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">

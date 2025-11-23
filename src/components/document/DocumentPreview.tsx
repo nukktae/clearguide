@@ -35,9 +35,9 @@ export function DocumentPreview({
       <div className="p-4 border-b border-gray-100 bg-gray-50">
         <div className="flex items-center gap-2">
           {isPDF ? (
-            <FileText className="h-4 w-4 text-[#1A2A4F]" strokeWidth={1.5} />
+            <FileText className="h-4 w-4 text-[#1C2329]" strokeWidth={1.5} />
           ) : (
-            <ImageIcon className="h-4 w-4 text-[#1A2A4F]" strokeWidth={1.5} />
+            <ImageIcon className="h-4 w-4 text-[#1C2329]" strokeWidth={1.5} />
           )}
           <span className="text-sm font-medium text-[#1A1A1A] truncate">
             {fileName}

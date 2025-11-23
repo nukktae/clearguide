@@ -30,7 +30,7 @@ export function FloatingChatButton({
       title="도움이 필요하신가요?"
     >
       <div className="relative">
-        <MessageCircle className="h-6 w-6 text-[#1A2A4F] dark:text-blue-400" />
+        <MessageCircle className="h-6 w-6 text-[#1C2329] dark:text-blue-400" />
         <Sparkles className="h-3 w-3 text-blue-500 absolute -top-1 -right-1" />
       </div>
       {/* Tooltip */}

@@ -71,7 +71,7 @@ export default function AppPage() {
     try {
       // Step 1: Upload file
       setCurrentStep(0);
-      setUploadProgress(25);
+      setUploadProgress(10);
       const formData = new FormData();
       formData.append("file", selectedFile);
 
@@ -86,53 +86,109 @@ export default function AppPage() {
       }
 
       const uploadData = await uploadResponse.json();
+      const documentId = uploadData.documentId;
       setCurrentStep(1);
+      setUploadProgress(30);
+
+      // Step 2: Extract text (OCR)
+      const ocrResponse = await fetch("/app/api/ocr", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: documentId,
+        }),
+      });
+
+      if (!ocrResponse.ok) {
+        const errorData = await ocrResponse.json();
+        throw new Error(errorData.error || "텍스트 추출 실패");
+      }
+
+      const ocrData = await ocrResponse.json();
+      const ocrId = ocrData.ocrId;
+      setCurrentStep(2);
       setUploadProgress(50);
 
-      // Step 2: Parse document (OCR + Analysis)
-      setCurrentStep(2);
+      // Step 3: Create summary
+      const summaryResponse = await fetch("/app/api/summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: documentId,
+          ocrId: ocrId,
+        }),
+      });
+
+      if (!summaryResponse.ok) {
+        const errorData = await summaryResponse.json();
+        throw new Error(errorData.error || "요약 생성 실패");
+      }
+
+      const summaryData = await summaryResponse.json();
+      setUploadProgress(70);
+
+      // Step 4: Create checklist
+      const checklistResponse = await fetch("/app/api/checklist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: documentId,
+          ocrId: ocrId,
+        }),
+      });
+
+      if (!checklistResponse.ok) {
+        const errorData = await checklistResponse.json();
+        throw new Error(errorData.error || "체크리스트 생성 실패");
+      }
+
+      const checklistData = await checklistResponse.json();
+      setCurrentStep(3);
+      setUploadProgress(90);
+
+      // Step 5: Parse risks (using parse endpoint for risks only)
       const parseResponse = await fetch("/app/api/parse", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          documentId: uploadData.documentId,
-          rawText: uploadData.ocrResult.text,
+          documentId: documentId,
+          ocrId: ocrId,
         }),
       });
 
-      if (!parseResponse.ok) {
-        const errorData = await parseResponse.json();
-        throw new Error(errorData.error || "문서 분석 실패");
+      let risks: any[] = [];
+      if (parseResponse.ok) {
+        const parseData = await parseResponse.json();
+        risks = parseData.parsedDocument?.risks || [];
       }
 
-      const parseData = await parseResponse.json();
-      setCurrentStep(3);
-      setUploadProgress(75);
-
-      // Step 3: Save document
-      const saveResponse = await fetch("/app/api/documents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // Combine all parsed data
+      const parsedDocument: ParsedDocument = {
+        documentId: documentId,
+        summary: summaryData.summary,
+        actions: checklistData.actions,
+        risks: risks,
+        meta: {
+          parsedAt: new Date().toISOString(),
+          confidence: 0.85,
+          language: "ko",
         },
-        body: JSON.stringify({
-          document: uploadData.document,
-          parsedDocument: parseData.parsedDocument,
-        }),
-      });
-
-      if (!saveResponse.ok) {
-        console.warn("Failed to save document, but parsing succeeded");
-      }
+      };
 
       setUploadProgress(100);
-      setParsedDocument(parseData.parsedDocument);
+      setParsedDocument(parsedDocument);
 
       // Redirect to document detail page
       setTimeout(() => {
-        router.push(`/app/document/${uploadData.documentId}`);
+        router.push(`/app/document/${documentId}`);
       }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.");
@@ -189,7 +245,7 @@ export default function AppPage() {
 
           {/* Processing Stepper */}
           {isProcessing && (
-              <div className="p-12 bg-white dark:bg-[#1E293B] rounded-2xl border border-[#ECEEF3] dark:border-gray-700 shadow-[0_8px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
+              <div className="p-12 bg-[#F8F8F9] dark:bg-[#1E293B] rounded-2xl border border-[#ECEEF3] dark:border-gray-700 shadow-[0_8px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
                 <ParsingStepper steps={parsingSteps} currentStep={currentStep} />
             </div>
           )}
@@ -197,7 +253,7 @@ export default function AppPage() {
           {/* Error Message */}
             {error && (
               <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-300">
-                <p className="font-medium">{t("common.errorOccurred")}</p>
+                <p className="font-medium">{t("errorOccurred")}</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
             )}
@@ -219,15 +275,15 @@ export default function AppPage() {
       {/* Footer */}
       <footer className="mt-32 pt-12 border-t border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap items-center justify-center gap-4 text-[12px] text-[#9BA0A7] dark:text-gray-500">
-          <Link href="/terms" className="hover:text-[#1A2A4F] dark:hover:text-gray-300 transition-colors">
+          <Link href="/terms" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
             이용약관
           </Link>
           <span className="text-[#E0E0E0] dark:text-gray-700">|</span>
-          <Link href="/privacy" className="hover:text-[#1A2A4F] dark:hover:text-gray-300 transition-colors">
+          <Link href="/privacy" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
             개인정보처리방침
           </Link>
           <span className="text-[#E0E0E0] dark:text-gray-700">|</span>
-          <Link href="/contact" className="hover:text-[#1A2A4F] dark:hover:text-gray-300 transition-colors">
+          <Link href="/contact" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
             문의하기
           </Link>
         </div>

@@ -12,7 +12,11 @@ export function AccountDropdown() {
   const router = useRouter();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const t = useTranslations();
-  const { signOut, user } = useAuth();
+  const { signOut, user, kakaoUser } = useAuth();
+  
+  // Get display info from either Firebase or Kakao user
+  const displayName = user?.displayName || kakaoUser?.nickname || null;
+  const photoURL = user?.photoURL || kakaoUser?.profileImageUrl || null;
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,10 +60,10 @@ export function AccountDropdown() {
         aria-expanded={isOpen}
       >
         <div className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-          {user?.photoURL ? (
+          {photoURL ? (
             <img
-              src={user.photoURL}
-              alt={user.displayName || "User"}
+              src={photoURL}
+              alt={displayName || "User"}
               className="w-full h-full object-cover"
             />
           ) : (

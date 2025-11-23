@@ -40,7 +40,7 @@ export function CalendarDay({
       onClick={(e) => onClick(date, e)}
       data-date={getDateKey()}
       className={cn(
-        "relative min-h-[80px] md:min-h-[100px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-[#1A2A4F] dark:hover:border-blue-400",
+        "relative min-h-[80px] md:min-h-[100px] p-2 border border-gray-200 dark:border-gray-700 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-[#1C2329] dark:hover:border-blue-400",
         !isCurrentMonth && "opacity-30",
         isToday && "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700"
       )}

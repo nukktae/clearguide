@@ -86,7 +86,7 @@ export function DocumentRow({
         <div className="flex items-center gap-3 min-w-0 h-5">
           <div className="shrink-0 w-8 h-8 flex items-center justify-center">
             <div className="rounded bg-[#F4F6F9] dark:bg-gray-800 p-1.5 flex items-center justify-center w-8 h-8">
-              <FileText className="h-4 w-4 text-[#1A2A4F] dark:text-blue-400" strokeWidth={2} />
+              <FileText className="h-4 w-4 text-[#1C2329] dark:text-blue-400" strokeWidth={2} />
             </div>
           </div>
           <div className="min-w-0 flex-1">

@@ -223,7 +223,7 @@ export function ActionChecklist({
                       </div>
                       <button
                         onClick={() => handleAddToCalendar(action)}
-                        className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] shrink-0"
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-[12px] text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] shrink-0"
                         title="캘린더에 추가"
                       >
                         <Calendar className="h-3.5 w-3.5" />
@@ -232,13 +232,30 @@ export function ActionChecklist({
                     </div>
                   )}
                   
-                  {/* Row 2: Location */}
-                  {action.locationName && (
+                  {/* Row 2: Location / Website */}
+                  {(action.locationName || action.websiteUrl) && (
                     <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-1.5 text-[14px] text-[#6D6D6D]">
-                        <MapPin className="h-4 w-4 shrink-0" />
-                        <span>{action.locationName}</span>
-                      </div>
+                      {action.locationName ? (
+                        <div className="flex items-center gap-1.5 text-[14px] text-[#6D6D6D]">
+                          <MapPin className="h-4 w-4 shrink-0" />
+                          <span>{action.locationName}</span>
+                        </div>
+                      ) : action.websiteUrl ? (
+                        <div className="flex items-center gap-1.5 text-[14px] text-[#6D6D6D]">
+                          <Globe className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{action.websiteUrl.replace(/^https?:\/\//, '').replace(/^www\./, '')}</span>
+                        </div>
+                      ) : null}
+                      {action.locationType === "online" && action.websiteUrl && (
+                        <button
+                          onClick={() => handleWebsiteClick(action.websiteUrl!)}
+                          className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3] shrink-0"
+                          title="웹사이트 열기"
+                        >
+                          <Globe className="h-3 w-3" />
+                          <span>웹사이트</span>
+                        </button>
+                      )}
                       {isCommunityCenterVisit(action.locationName, action.locationType) && (
                         <div className="flex items-center gap-1.5 shrink-0">
                           {(() => {
@@ -247,7 +264,7 @@ export function ActionChecklist({
                               <>
                                 <button
                                   onClick={() => handleKakaoMapClick(action.locationName!)}
-                                  className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                                  className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
                                   title="카카오맵에서 위치 보기"
                                 >
                                   <MapPin className="h-3 w-3" />
@@ -255,7 +272,7 @@ export function ActionChecklist({
                                 </button>
                                 <button
                                   onClick={() => handlePhoneSearchClick(action.locationName!)}
-                                  className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                                  className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
                                   title="전화번호 검색"
                                 >
                                   <Phone className="h-3 w-3" />
@@ -264,7 +281,7 @@ export function ActionChecklist({
                                 {links.gov24 && (
                                   <button
                                     onClick={() => handleWebsiteClick(links.gov24!)}
-                                    className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                                    className="flex items-center justify-center gap-1.5 h-7 px-2.5 text-[11px] font-medium text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
                                     title="정부24 납부하기"
                                   >
                                     <Globe className="h-3 w-3" />
@@ -274,7 +291,7 @@ export function ActionChecklist({
                                 {links.municipalOffice && (
                                   <button
                                     onClick={() => handleWebsiteClick(links.municipalOffice!)}
-                                    className="flex items-center justify-center h-7 px-2.5 text-[11px] font-medium text-[#1A2A4F] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
+                                    className="flex items-center justify-center h-7 px-2.5 text-[11px] font-medium text-[#1C2329] hover:text-[#2DB7A3] hover:bg-[#F0F9F7] rounded-md transition-colors border border-gray-200 hover:border-[#2DB7A3]"
                                     title="구청 홈페이지"
                                   >
                                     구청
@@ -301,15 +318,32 @@ export function ActionChecklist({
                             준비 정보:
                           </p>
                           <div className="space-y-1.5 text-xs text-[#6D6D6D]">
-                            <div>
-                              <span className="font-medium">예금주:</span> 홍길동
-                            </div>
-                            <div>
-                              <span className="font-medium">은행:</span> 우리은행
-                            </div>
-                            <div>
-                              <span className="font-medium">계좌번호:</span> 1234-5678-9012-34
-                            </div>
+                            {action.bankAccount?.accountHolder && (
+                              <div>
+                                <span className="font-medium">예금주:</span> {action.bankAccount.accountHolder}
+                              </div>
+                            )}
+                            {action.bankAccount?.bankName && (
+                              <div>
+                                <span className="font-medium">은행:</span> {action.bankAccount.bankName}
+                              </div>
+                            )}
+                            {action.bankAccount?.accountNumber && (
+                              <div>
+                                <span className="font-medium">계좌번호:</span> {action.bankAccount.accountNumber}
+                              </div>
+                            )}
+                            {action.bankAccount?.giroNumber && (
+                              <div>
+                                <span className="font-medium">지로번호:</span> {action.bankAccount.giroNumber}
+                              </div>
+                            )}
+                            {(!action.bankAccount?.accountHolder && !action.bankAccount?.bankName && 
+                              !action.bankAccount?.accountNumber && !action.bankAccount?.giroNumber) && (
+                              <div className="text-[#9BA0A7] italic">
+                                계좌 정보가 문서에서 추출되지 않았습니다.
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -36,7 +36,7 @@ export function BaseInfoCard({
       <div className="space-y-4">
         {/* Avatar */}
         <div className="flex items-center gap-4 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <div className="w-16 h-16 rounded-full bg-[#F4F6F9] dark:bg-gray-700 flex items-center justify-center text-xl font-semibold text-[#1A2A4F] dark:text-gray-200">
+          <div className="w-16 h-16 rounded-full bg-[#F4F6F9] dark:bg-gray-700 flex items-center justify-center text-xl font-semibold text-[#1C2329] dark:text-gray-200">
             {userName.charAt(0)}
           </div>
           <div>

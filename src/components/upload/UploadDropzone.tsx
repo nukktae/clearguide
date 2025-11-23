@@ -71,7 +71,7 @@ export function UploadDropzone({
         "bg-white dark:bg-gray-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]",
         isDragging
           ? "border-[#2DB7A3] dark:border-teal-400 bg-[#2DB7A3]/5 dark:bg-teal-400/10"
-          : "border-[#D4D7DD] dark:border-gray-600 hover:border-[#1A2A4F]/30 dark:hover:border-blue-400/50",
+          : "border-[#D4D7DD] dark:border-gray-600 hover:border-[#1C2329]/30 dark:hover:border-blue-400/50",
         className
       )}
       onDragOver={handleDragOver}
@@ -97,7 +97,7 @@ export function UploadDropzone({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A2A4F] text-white rounded-full font-medium hover:bg-[#2A3A5F] hover:shadow-md transition-all duration-200 mt-2"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C2329] text-white rounded-full font-medium hover:bg-[#2A3441] hover:shadow-md transition-all duration-200 mt-2"
           >
             <File className="h-4 w-4" strokeWidth={1.5} />
             파일 선택

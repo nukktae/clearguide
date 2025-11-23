@@ -22,7 +22,13 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Check for error in URL params (from Kakao callback)
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,48 +122,51 @@ export default function LoginPage() {
     }
   };
 
+  const handleKakaoSignIn = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("[Login Page] Kakao sign-in button clicked");
+    setError(null);
+    setIsLoading(true);
+    
+    // Use window.location.href for immediate redirect
+    console.log("[Login Page] Redirecting to /api/auth/kakao/login");
+    window.location.href = "/api/auth/kakao/login";
+  };
+
+  const [rememberMe, setRememberMe] = React.useState(false);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-white flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-[420px]">
-        {/* Card with animation */}
-        <div
-          className={`bg-white rounded-2xl shadow-[0_8px_20px_rgba(0,0,0,0.08)] p-8 border border-[#ECEEF3] transition-all duration-500 ${
-            mounted
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-1"
-          }`}
-        >
+    <div className="min-h-screen bg-white flex">
+      {/* Left Side - Login Form */}
+      <div className="flex-1 flex items-center justify-center pl-8 lg:pl-16 xl:pl-24 pr-8 lg:pr-12 xl:pr-16 py-16">
+        <div className={`w-full max-w-[400px] transition-all duration-500 ${
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        }`}>
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
-              <Image
-                src="/images/logos/clearguidelogo.png"
-                alt="클리어가이드"
-                width={64}
-                height={64}
-                className="w-full h-full object-contain"
-                unoptimized
-              />
-            </div>
-            <h1 className="text-[24px] font-semibold text-[#1A1A1A] mb-2">
-              클리어가이드
+          <div className="mb-8">
+            <h1 className="text-3xl lg:text-4xl font-bold text-[#1C2329] mb-3">
+              다시 오신 것을 환영합니다
             </h1>
-            <p className="text-[15px] text-[#6D6D6D]">로그인</p>
+            <p className="text-base text-[#4E535A] leading-relaxed">
+              공공문서를 쉽게 이해하고 관리하세요. 로그인하여 시작하세요.
+            </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-[#0A1A2F] mb-1.5">
-                이메일
+              <label htmlFor="email" className="block text-sm font-medium text-[#1C2329] mb-2">
+                이메일 주소
               </label>
               <Input
                 id="email"
@@ -170,12 +179,13 @@ export default function LoginPage() {
                 }}
                 required
                 disabled={isLoading}
+                className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-[13px] font-medium text-[#0A1A2F] mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-[#1C2329] mb-2">
                 비밀번호
               </label>
               <Input
@@ -189,14 +199,34 @@ export default function LoginPage() {
                 }}
                 required
                 disabled={isLoading}
+                className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
             </div>
 
-            {/* Login Button */}
-            <Button
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-[#1C2329] focus:ring-[#1C2329]"
+                />
+                <span className="text-sm text-[#4E535A]">로그인 상태 유지</span>
+              </label>
+              <Link
+                href="/login/forgot-password"
+                className="text-sm text-[#1C2329] hover:underline"
+              >
+                비밀번호를 잊으셨나요?
+              </Link>
+            </div>
+
+            {/* Sign In Button */}
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-[50px] text-[14px] font-bold"
+              className="w-full h-12 bg-[#1C2329] text-white rounded-lg font-medium hover:bg-[#2A3441] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -206,43 +236,26 @@ export default function LoginPage() {
               ) : (
                 "로그인"
               )}
-            </Button>
+            </button>
           </form>
 
-          {/* Secondary Links */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <Link
-              href="/login/forgot-password"
-              className="text-[13px] text-[#6D6D6D] hover:text-[#1A2A4F] transition-colors"
-            >
-              비밀번호 찾기
-            </Link>
-            <span className="text-[#D4D7DD]">|</span>
-            <Link
-              href="/login/signup"
-              className="text-[13px] text-[#6D6D6D] hover:text-[#0A1A2F] transition-colors"
-            >
-              회원가입
-            </Link>
-          </div>
-
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-[12px] text-[#9CA3AF]">또는</span>
+              <span className="bg-white px-4 text-sm text-[#9CA3AF]">또는 다음으로 로그인</span>
             </div>
           </div>
 
           {/* Social Login */}
-          <div className="space-y-2.5">
+          <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-white border border-gray-300 text-[14px] font-medium text-[#1A1A1A] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -264,10 +277,16 @@ export default function LoginPage() {
               </svg>
               Google로 로그인
             </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-[14px] font-medium text-[#000000] hover:bg-[#FEE500]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <a
+              href="/api/auth/kakao/login"
+              onClick={(e) => {
+                console.log("[Login Page] Kakao link clicked");
+                if (isLoading) {
+                  e.preventDefault();
+                  return false;
+                }
+              }}
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm no-underline"
             >
               <Image
                 src="/images/logos/kakaotalk-logo.png"
@@ -276,22 +295,33 @@ export default function LoginPage() {
                 height={20}
                 className="h-5 w-5"
               />
-              카카오 로그인
-            </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-lg bg-[#03C75A] text-[14px] font-medium text-white hover:bg-[#03C75A]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="text-[16px]">N</span>
-              네이버 로그인
-            </button>
+              카카오로 로그인
+            </a>
           </div>
 
-          {/* Security Reassurance */}
-          <p className="text-[11px] text-[#9CA3AF] text-center mt-6 leading-relaxed">
-            AI 분석은 서버에 저장되지 않으며, 모든 문서는 사용자 기기에만 보관됩니다.
-          </p>
+          {/* Registration Link */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-[#4E535A]">
+              아직 계정이 없으신가요?{" "}
+              <Link href="/login/signup" className="text-[#1C2329] font-medium hover:underline">
+                회원가입
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Image */}
+      <div className="hidden lg:flex flex-1 items-center justify-start bg-white pl-8 xl:pl-12 py-16">
+        <div className="relative w-full h-full max-w-xl">
+          <Image
+            src="/images/this.png"
+            alt="Login illustration"
+            fill
+            className="object-contain"
+            priority
+            unoptimized
+          />
         </div>
       </div>
     </div>

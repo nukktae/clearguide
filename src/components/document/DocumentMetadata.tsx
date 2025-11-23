@@ -31,7 +31,7 @@ export function DocumentMetadata({
       {document.parsed?.meta && (
         <div className="bg-white border border-[#ECEEF3] rounded-2xl shadow-[0_8px_20px_rgba(0,0,0,0.03)] p-6">
           <h3 className="text-[19px] font-medium text-[#1A1A1A] mb-4 flex items-center gap-2">
-            <Tag className="h-5 w-5 text-[#1A2A4F]" strokeWidth={1.5} />
+            <Tag className="h-5 w-5 text-[#1C2329]" strokeWidth={1.5} />
             분석 정보
           </h3>
           <div className="space-y-3">

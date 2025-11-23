@@ -55,7 +55,7 @@ export function DocumentGrid({ documents, onView }: DocumentGridProps) {
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div className="shrink-0">
                     <div className="rounded bg-[#F4F6F9] dark:bg-gray-800 p-2">
-                      <FileText className="h-5 w-5 text-[#1A2A4F] dark:text-blue-400" />
+                      <FileText className="h-5 w-5 text-[#1C2329] dark:text-blue-400" />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">

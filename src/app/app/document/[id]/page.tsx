@@ -9,7 +9,8 @@ import { RiskAlertBox } from "@/src/components/summary/RiskAlertBox";
 import { EligibilityChecker } from "@/src/components/summary/EligibilityChecker";
 import { Button } from "@/src/components/common/Button";
 import { Spinner } from "@/src/components/common/Spinner";
-import { DocumentRecord } from "@/src/lib/parsing/types";
+import { Skeleton, ShimmerSkeleton } from "@/src/components/common/Skeleton";
+import { DocumentRecord, ParsedDocument } from "@/src/lib/parsing/types";
 import { ArrowLeft } from "lucide-react";
 import { TabbedDocumentViewer } from "@/src/components/document/TabbedDocumentViewer";
 import { CollapsibleMetadata } from "@/src/components/document/CollapsibleMetadata";
@@ -32,23 +33,98 @@ export default function DocumentDetailPage() {
   }, [params.id]);
 
   const loadDocument = async (id: string) => {
+    console.log("[Document Page] Loading document:", id);
     try {
       setIsLoading(true);
       
       // Handle demo documents
       if (id === DEMO_TAX_ID || id === DEMO_COMMUNITY_ID || id === DEMO_PENALTY_ID) {
+        console.log("[Document Page] Loading demo document");
         setDocument(demoDocuments[id]);
         setIsLoading(false);
         return;
       }
 
+      console.log("[Document Page] Fetching document from API...");
       const response = await fetch(`/app/api/documents/${id}`);
       if (!response.ok) {
-        throw new Error("문서를 불러오는데 실패했습니다.");
+        const errorData = await response.json();
+        console.error("[Document Page] Document fetch failed:", errorData);
+        throw new Error(errorData.error || "문서를 불러오는데 실패했습니다.");
       }
       const data = await response.json();
-      setDocument(data.document);
+      console.log("[Document Page] Document loaded:", {
+        id: data.document?.id,
+        fileName: data.document?.fileName,
+        hasParsed: !!data.document?.parsed,
+      });
+      
+      let document = data.document;
+      
+      // If document doesn't have parsed data, try to fetch summary and checklist separately
+      if (!document.parsed) {
+        console.log("[Document Page] Document has no parsed data, fetching summary and checklist...");
+        
+        try {
+          // Fetch summary
+          const summaryResponse = await fetch(`/app/api/summary?documentId=${id}`);
+          let summary = null;
+          if (summaryResponse.ok) {
+            const summaryData = await summaryResponse.json();
+            summary = summaryData.summary?.summary || summaryData.summaries?.[0]?.summary;
+            console.log("[Document Page] Summary fetched:", !!summary);
+          }
+          
+          // Fetch checklist
+          const checklistResponse = await fetch(`/app/api/checklist?documentId=${id}`);
+          let actions = [];
+          if (checklistResponse.ok) {
+            const checklistData = await checklistResponse.json();
+            actions = checklistData.checklist?.actions || checklistData.checklists?.[0]?.actions || [];
+            console.log("[Document Page] Checklist fetched:", actions.length, "actions");
+          }
+          
+          // Fetch risks from parse endpoint (optional - needs ocrId)
+          // For now, skip risks if we don't have ocrId (risks are optional)
+          const risks: any[] = [];
+          console.log("[Document Page] Skipping risks fetch - ocrId not available in document detail page");
+          
+          // Combine into parsed document if we have at least summary or checklist
+          if (summary || actions.length > 0) {
+            const parsedDocument: ParsedDocument = {
+              documentId: id,
+              summary: summary || {
+                bullets: [],
+                docType: "공공문서",
+                tone: "friendly",
+              },
+              actions: actions,
+              risks: risks,
+              meta: {
+                parsedAt: new Date().toISOString(),
+                confidence: 0.85,
+                language: "ko",
+              },
+            };
+            document = {
+              ...document,
+              parsed: parsedDocument,
+            };
+            console.log("[Document Page] Combined parsed document from separate endpoints");
+          }
+        } catch (fetchErr) {
+          console.warn("[Document Page] Failed to fetch summary/checklist:", fetchErr);
+        }
+      }
+      
+      setDocument(document);
+      console.log("[Document Page] Document set:", {
+        hasParsed: !!document.parsed,
+        hasSummary: !!document.parsed?.summary,
+        hasActions: !!document.parsed?.actions,
+      });
     } catch (err) {
+      console.error("[Document Page] Error loading document:", err);
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
     } finally {
       setIsLoading(false);
@@ -75,10 +151,51 @@ export default function DocumentDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner size="lg" />
-          <p className="text-[#6D6D6D]">로딩 중...</p>
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-24" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Document Viewer Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-64 w-full rounded-lg" />
+          </div>
+          
+          {/* Right: Analysis Results Skeleton */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Checklist Skeleton */}
+        <div className="mt-12 space-y-4">
+          <Skeleton className="h-6 w-24 mx-auto" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 border border-gray-200 rounded-lg space-y-3">
+              <div className="flex items-start gap-4">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -127,7 +244,7 @@ export default function DocumentDetailPage() {
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <FileTextIcon className="h-4 w-4 text-[#1A2A4F]" strokeWidth={1.5} />
+                <FileTextIcon className="h-4 w-4 text-[#1C2329]" strokeWidth={1.5} />
                 <h1 className="text-[24px] font-semibold text-[#1A1A1A]">
                   {document.fileName}
                 </h1>

@@ -50,7 +50,7 @@ export function HeaderControls({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("headerControls.searchPlaceholder")}
-          className="w-full pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1E293B] text-[#1A1A1A] dark:text-gray-100 placeholder:text-[#6D6D6D] dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1A2A4F] dark:focus:ring-blue-500"
+          className="w-full pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1E293B] text-[#1A1A1A] dark:text-gray-100 placeholder:text-[#6D6D6D] dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1C2329] dark:focus:ring-blue-500"
         />
         {searchQuery && (
           <button
@@ -90,7 +90,7 @@ export function HeaderControls({
                   className={cn(
                     "w-full text-left px-4 py-2 text-sm transition-colors",
                     sortOption === option.value
-                      ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100"
+                      ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100"
                       : "text-[#1A1A1A] dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
                   )}
                 >
@@ -109,7 +109,7 @@ export function HeaderControls({
           className={cn(
             "p-1.5 rounded transition-colors",
             viewMode === "list"
-              ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100"
+              ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100"
               : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
           )}
         >
@@ -120,7 +120,7 @@ export function HeaderControls({
           className={cn(
             "p-1.5 rounded transition-colors",
             viewMode === "grid"
-              ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100"
+              ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100"
               : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
           )}
         >

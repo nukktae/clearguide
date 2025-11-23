@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { X, FileText, Calendar as CalendarIcon, ExternalLink } from "lucide-react";
+import { X, FileText, Calendar as CalendarIcon, ExternalLink, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/src/components/common/Button";
 import { cn } from "@/src/lib/utils/cn";
 
@@ -14,10 +14,13 @@ interface EventPopoverProps {
     documentName: string;
     documentId: string;
     description?: string;
+    type?: "custom" | "action" | "risk";
   }>;
   date: Date;
   onClose: () => void;
   onViewDetail: (documentId: string) => void;
+  onEdit?: (event: EventPopoverProps["events"][0]) => void;
+  onDelete?: (eventId: string) => Promise<void>;
   position?: { top: number; left: number };
   isMobile?: boolean;
 }
@@ -27,9 +30,12 @@ export function EventPopover({
   date,
   onClose,
   onViewDetail,
+  onEdit,
+  onDelete,
   position,
   isMobile = false,
 }: EventPopoverProps) {
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ko-KR", {
       year: "numeric",
@@ -101,6 +107,8 @@ export function EventPopover({
                 <span className="truncate max-w-[120px]">{event.documentName}</span>
               </div>
             </div>
+            <div className="flex gap-2">
+              {event.documentId && (
             <Button
               variant="outline"
               size="sm"
@@ -108,11 +116,46 @@ export function EventPopover({
                 onViewDetail(event.documentId);
                 onClose();
               }}
-              className="w-full"
+                  className="flex-1"
             >
               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
               상세 보기
             </Button>
+              )}
+              {event.type === "custom" && onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(event)}
+                  className="px-3"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {event.type === "custom" && onDelete && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (confirm("이 일정을 삭제하시겠습니까?")) {
+                      setDeletingId(event.id);
+                      try {
+                        await onDelete(event.id);
+                        onClose();
+                      } catch (error) {
+                        alert(error instanceof Error ? error.message : "삭제 중 오류가 발생했습니다.");
+                      } finally {
+                        setDeletingId(null);
+                      }
+                    }
+                  }}
+                  disabled={deletingId === event.id}
+                  className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -170,6 +213,8 @@ export function EventPopover({
                       <span className="truncate max-w-[120px]">{event.documentName}</span>
                     </div>
                   </div>
+                  <div className="flex gap-2">
+                    {event.documentId && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -177,11 +222,46 @@ export function EventPopover({
                       onViewDetail(event.documentId);
                       onClose();
                     }}
-                    className="w-full"
+                        className="flex-1"
                   >
                     <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                     상세 보기
                   </Button>
+                    )}
+                    {event.type === "custom" && onEdit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(event)}
+                        className="px-3"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {event.type === "custom" && onDelete && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          if (confirm("이 일정을 삭제하시겠습니까?")) {
+                            setDeletingId(event.id);
+                            try {
+                              await onDelete(event.id);
+                              onClose();
+                            } catch (error) {
+                              alert(error instanceof Error ? error.message : "삭제 중 오류가 발생했습니다.");
+                            } finally {
+                              setDeletingId(null);
+                            }
+                          }
+                        }}
+                        disabled={deletingId === event.id}
+                        className="px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

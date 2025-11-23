@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/src/components/common/Button";
 
 interface CalendarHeaderProps {
@@ -10,6 +10,7 @@ interface CalendarHeaderProps {
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
+  onAddEvent?: () => void;
 }
 
 export function CalendarHeader({
@@ -17,6 +18,7 @@ export function CalendarHeader({
   onPreviousMonth,
   onNextMonth,
   onToday,
+  onAddEvent,
 }: CalendarHeaderProps) {
   const t = useTranslations();
   const locale = typeof window !== "undefined" ? document.documentElement.lang || "ko" : "ko";
@@ -31,6 +33,17 @@ export function CalendarHeader({
         {monthYear}
       </h2>
       <div className="flex items-center gap-2">
+        {onAddEvent && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onAddEvent}
+            className="text-sm"
+          >
+            <Plus className="h-4 w-4 mr-1.5" />
+            일정 추가
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

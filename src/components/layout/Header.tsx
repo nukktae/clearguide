@@ -9,11 +9,16 @@ import { Menu } from "lucide-react";
 import { AccountDropdown } from "./AccountDropdown";
 import { MobileMenu } from "./MobileMenu";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
   const t = useTranslations();
+  const { user, kakaoUser } = useAuth();
+  
+  // Check if user is authenticated
+  const isAuthenticated = !!user || !!kakaoUser;
 
   const navItems = [
     {
@@ -39,8 +44,8 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white dark:bg-[#0F172A] border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
-        <div className="container mx-auto px-4">
+      <header className="bg-white dark:bg-[#0F172A] sticky top-0 z-30 border-t border-gray-100 dark:border-gray-800">
+        <div className="container mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -52,45 +57,63 @@ export function Header() {
                 className="h-8 w-auto"
                 priority
               />
-            <h1 className="text-xl font-semibold text-[#1A1A1A] dark:text-gray-100">
+              <h1 className="text-lg font-semibold text-[#1C2329] dark:text-gray-100">
               {t("navigation.brandName")}
             </h1>
           </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-7 flex-1 justify-center">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
-                return (
-            <Link 
-                    key={item.href}
-                    href={item.href}
-                    className={`text-[14px] transition-colors ${
-                      active
-                        ? "text-[#0A1A2F] dark:text-blue-400 font-medium border-b-2 border-[#0A1A2F] dark:border-blue-400 pb-1"
-                        : "text-[#6D6D6D] dark:text-gray-400 hover:text-[#0A1A2F] dark:hover:text-gray-100"
-                    }`}
-                  >
-                    {item.label}
-            </Link>
-                );
-              })}
-          </nav>
+            {/* Desktop Navigation - Only show when authenticated */}
+            {isAuthenticated && (
+              <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center px-6">
+                {navItems.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link 
+                      key={item.href}
+                      href={item.href}
+                      className={`text-sm font-medium transition-colors ${
+                        active
+                          ? "text-[#1C2329] dark:text-blue-400"
+                          : "text-[#1C2329] dark:text-gray-400 hover:text-[#1C2329] dark:hover:text-gray-100"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
 
-            {/* Right Side: Language Switcher, Account Dropdown (Desktop) / Hamburger (Mobile) */}
+            {/* Right Side: Language Switcher, CTA Button, Account Dropdown */}
             <div className="flex items-center gap-3 shrink-0">
-              {/* Language Switcher */}
-              <LanguageSwitcher />
-              
+              {/* Language Switcher - Hidden on mobile */}
               <div className="hidden md:block">
-                <AccountDropdown />
+              <LanguageSwitcher />
               </div>
+              
+              {/* CTA Button */}
+              <div className="hidden md:block">
+                <Link href="/app">
+                  <button className="px-5 py-2 bg-[#1C2329] dark:bg-gray-800 text-white rounded-full text-xs font-medium hover:bg-[#2A3441] dark:hover:bg-gray-700 transition-colors">
+                    시작하기
+                  </button>
+                </Link>
+              </div>
+              
+              {/* Account Dropdown - Desktop - Only show when authenticated */}
+              {isAuthenticated && (
+                <div className="hidden lg:block">
+                  <AccountDropdown />
+                </div>
+              )}
+              
+              {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Open menu"
               >
-                <Menu className="h-6 w-6 text-[#6D6D6D]" />
+                <Menu className="h-6 w-6 text-[#1C2329] dark:text-gray-400" />
               </button>
             </div>
           </div>

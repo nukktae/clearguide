@@ -66,7 +66,7 @@ export function UpcomingSidebar({
             className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
             <div className="flex items-start justify-between mb-2">
-              <h4 className="font-medium text-[#1A1A1A] dark:text-gray-100 text-sm flex-1 group-hover:text-[#1A2A4F] dark:group-hover:text-blue-400 transition-colors">
+              <h4 className="font-medium text-[#1A1A1A] dark:text-gray-100 text-sm flex-1 group-hover:text-[#1C2329] dark:group-hover:text-blue-400 transition-colors">
                 {event.title}
               </h4>
               <ArrowRight className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />

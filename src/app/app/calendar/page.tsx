@@ -37,12 +37,19 @@ export default function CalendarPage() {
   const loadDeadlines = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("/app/api/documents");
-      if (!response.ok) {
+      
+      // Load both document deadlines and custom calendar events
+      const [documentsResponse, calendarResponse] = await Promise.all([
+        fetch("/app/api/documents"),
+        fetch("/app/api/calendar").catch(() => null), // Don't fail if calendar API fails
+      ]);
+
+      if (!documentsResponse.ok) {
         throw new Error(t("calendar.loadError"));
       }
-      const data = await response.json();
-      const documents: DocumentRecord[] = data.documents || [];
+
+      const documentsData = await documentsResponse.json();
+      const documents: DocumentRecord[] = documentsData.documents || [];
 
       // Extract deadlines from all documents
       const allDeadlines: DeadlineItem[] = [];
@@ -82,6 +89,25 @@ export default function CalendarPage() {
         });
       });
 
+      // Add custom calendar events
+      if (calendarResponse && calendarResponse.ok) {
+        const calendarData = await calendarResponse.json();
+        if (calendarData.success && calendarData.events) {
+          calendarData.events.forEach((event: any) => {
+            allDeadlines.push({
+              id: `custom-${event.id}`,
+              title: event.title,
+              deadline: event.deadline,
+              type: event.type === "risk" ? "risk" : "action",
+              documentId: event.documentId || "",
+              documentName: event.documentName || "사용자 일정",
+              description: event.description,
+              severity: event.severity || (event.urgency === "critical" ? "critical" : event.urgency === "high" ? "high" : event.urgency === "medium" ? "medium" : "low"),
+            });
+          });
+        }
+      }
+
       // Sort by deadline date (upcoming first)
       allDeadlines.sort((a, b) => {
         const dateA = new Date(a.deadline).getTime();
@@ -110,6 +136,7 @@ export default function CalendarPage() {
       documentName: deadline.documentName,
       documentId: deadline.documentId,
       description: deadline.description,
+      type: deadline.id.startsWith("custom-") ? ("custom" as const) : deadline.type,
     }));
   }, [deadlines]);
 
@@ -126,6 +153,11 @@ export default function CalendarPage() {
 
   const handleViewDetail = (documentId: string) => {
     router.push(`/app/document/${documentId}`);
+  };
+
+  const handleEventChange = () => {
+    // Reload deadlines when events are created/updated/deleted
+    loadDeadlines();
   };
 
   return (
@@ -166,6 +198,9 @@ export default function CalendarPage() {
         <CalendarContainer
           events={calendarEvents}
           onViewDetail={handleViewDetail}
+          onEventCreate={handleEventChange}
+          onEventUpdate={handleEventChange}
+          onEventDelete={handleEventChange}
         />
       ) : (
         <DeadlineListView deadlines={deadlines} onItemClick={handleViewDetail} />

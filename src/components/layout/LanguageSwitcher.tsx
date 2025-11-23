@@ -36,7 +36,7 @@ export function LanguageSwitcher() {
         className={cn(
           "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
           currentLocale === "ko"
-            ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100 shadow-sm"
+            ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100 shadow-sm"
             : "text-[#6D6D6D] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
         )}
         title="한국어"
@@ -49,7 +49,7 @@ export function LanguageSwitcher() {
         className={cn(
           "px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
           currentLocale === "en"
-            ? "bg-[#1A2A4F] dark:bg-blue-900/30 text-white dark:text-blue-100 shadow-sm"
+            ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100 shadow-sm"
             : "text-[#6D6D6D] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
         )}
         title="English"

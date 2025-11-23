@@ -31,7 +31,7 @@ export function MessageBubble({
     >
       {isAssistant && (
         <div className="shrink-0 w-7 h-7 rounded-full bg-[#F7F7F8] dark:bg-gray-800 flex items-center justify-center">
-          <Sparkles className="h-3.5 w-3.5 text-[#1A2A4F] dark:text-blue-400" />
+          <Sparkles className="h-3.5 w-3.5 text-[#1C2329] dark:text-blue-400" />
         </div>
       )}
       <div className="flex-1 min-w-0">

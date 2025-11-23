@@ -19,7 +19,36 @@ export function Chatbot({ documentContext }: ChatbotProps) {
   const [isMinimized, setIsMinimized] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [conversationId, setConversationId] = React.useState<string | null>(null);
   const pathname = usePathname();
+
+  // Load conversation messages when conversationId changes
+  React.useEffect(() => {
+    if (conversationId && isOpen) {
+      loadConversation(conversationId);
+    }
+  }, [conversationId, isOpen]);
+
+  const loadConversation = async (convId: string) => {
+    try {
+      const response = await fetch(`/app/api/chat?conversationId=${convId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.messages) {
+          // Convert API messages to ChatMessage format
+          const chatMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp),
+          }));
+          setMessages(chatMessages);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load conversation:", error);
+    }
+  };
 
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return;
@@ -34,17 +63,87 @@ export function Chatbot({ documentContext }: ChatbotProps) {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      const requestBody = {
+        message,
+        conversationId: conversationId || undefined,
+        documentId: documentContext?.documentId,
+      };
+      
+      console.log("[Chatbot] Sending message:", { 
+        hasConversationId: !!conversationId,
+        hasDocumentId: !!documentContext?.documentId 
+      });
+
+      const response = await fetch("/app/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("[Chatbot] Response status:", response.status, response.statusText);
+
+      if (!response.ok) {
+        // Try to parse error response
+        let errorMessage = "메시지 전송에 실패했습니다.";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.details || errorMessage;
+          
+          // Handle specific error cases
+          if (response.status === 401) {
+            errorMessage = "로그인이 필요합니다. 페이지를 새로고침해주세요.";
+          } else if (response.status === 404) {
+            errorMessage = errorData.error || "대화를 찾을 수 없습니다.";
+          } else if (response.status === 500) {
+            errorMessage = errorData.error || "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+          }
+        } catch {
+          // If response is not JSON, use status text
+          if (response.status === 401) {
+            errorMessage = "로그인이 필요합니다. 페이지를 새로고침해주세요.";
+          } else {
+            errorMessage = response.statusText || errorMessage;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update conversation ID if this is a new conversation
+        if (!conversationId && data.conversationId) {
+          setConversationId(data.conversationId);
+        }
+
+        // Add AI response to messages
       const aiMessage: ChatMessage = {
+          id: data.message.id,
+          role: data.message.role,
+          content: data.message.content,
+          timestamp: new Date(data.message.timestamp),
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+      } else {
+        throw new Error(data.error || "응답을 받지 못했습니다.");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "네, 도와드리겠습니다. (이 기능은 곧 실제 AI와 연결됩니다.)",
+        content: error instanceof Error 
+          ? `죄송합니다. ${error.message}` 
+          : "죄송합니다. 메시지를 전송하는 중 오류가 발생했습니다. 다시 시도해주세요.",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleQuickAction = async (action: QuickActionType) => {
@@ -67,9 +166,34 @@ export function Chatbot({ documentContext }: ChatbotProps) {
     // Navigate will be handled by the button's onClick
   };
 
-  const handleOpen = () => {
+  const handleOpen = async () => {
     setIsOpen(true);
     setIsMinimized(false);
+    
+    // Create a new conversation if we don't have one and have document context
+    if (!conversationId && documentContext) {
+      try {
+        const response = await fetch("/app/api/chat/conversations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            documentId: documentContext.documentId,
+            documentName: documentContext.documentName,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.conversationId) {
+            setConversationId(data.conversationId);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to create conversation:", error);
+      }
+    }
   };
 
   const handleClose = () => {

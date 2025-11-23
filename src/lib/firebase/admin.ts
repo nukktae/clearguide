@@ -32,19 +32,21 @@ export async function verifyIdToken(idToken: string): Promise<boolean> {
 }
 
 /**
- * Get user from token (client-side only)
- * For server-side, use Firebase Admin SDK
+ * Get user from token (server-side JWT decoding)
+ * Note: This decodes the token without verification. For production, use Firebase Admin SDK.
  */
 export async function getUserFromToken(idToken: string) {
   try {
-    // This would normally use Firebase Admin SDK on the server
-    // For client-side, we'll decode the JWT payload
+    // Decode JWT payload (server-side compatible)
     const parts = idToken.split(".");
     if (parts.length !== 3) {
       return null;
     }
     
-    const payload = JSON.parse(atob(parts[1]));
+    // Decode base64 payload (works in both browser and Node.js)
+    const payloadBuffer = Buffer.from(parts[1], 'base64');
+    const payload = JSON.parse(payloadBuffer.toString('utf-8'));
+    
     return {
       uid: payload.user_id || payload.sub,
       email: payload.email,

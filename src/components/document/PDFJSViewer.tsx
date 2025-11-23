@@ -157,7 +157,7 @@ export function PDFJSViewer({
     return (
       <div className={cn("flex items-center justify-center h-[800px] bg-gray-50", className)}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A2A4F] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C2329] mx-auto mb-4"></div>
           <p className="text-sm text-gray-600">PDF를 불러오는 중...</p>
         </div>
       </div>

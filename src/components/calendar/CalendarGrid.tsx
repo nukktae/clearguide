@@ -78,7 +78,7 @@ export function CalendarGrid({
   };
 
   return (
-    <div className="bg-white dark:bg-[#1E293B] rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+    <div className="bg-[#F8F8F9] dark:bg-[#1E293B] rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAYS_OF_WEEK.map((day) => (
