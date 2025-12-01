@@ -61,20 +61,10 @@ export function PreferencesProvider({
     }
     console.log("[PreferencesProvider] Current HTML classes after:", html.className);
     
-    // Apply font size immediately on mount
-    const multipliers = {
-      small: "0.875",
-      medium: "1",
-      large: "1.125",
-    };
-    const multiplier = multipliers[loaded.fontSize];
-    html.style.setProperty(
-      "--font-size-multiplier",
-      multiplier
-    );
-    console.log("[PreferencesProvider] Applied font size:", loaded.fontSize, "multiplier:", multiplier);
-    console.log("[PreferencesProvider] HTML element font-size-multiplier:", html.style.getPropertyValue("--font-size-multiplier"));
-    console.log("[PreferencesProvider] Computed font size multiplier:", window.getComputedStyle(html).getPropertyValue("--font-size-multiplier"));
+    // Apply font size immediately on mount using data attribute
+    html.setAttribute("data-font-size", loaded.fontSize);
+    console.log("[PreferencesProvider] Applied font size:", loaded.fontSize);
+    console.log("[PreferencesProvider] HTML data-font-size:", html.getAttribute("data-font-size"));
     
     setMounted(true);
     console.log("[PreferencesProvider] Component mounted");
@@ -115,7 +105,7 @@ export function PreferencesProvider({
     document.body.removeChild(testElement);
   }, [preferences.darkMode, mounted]);
 
-  // Apply font size
+  // Apply font size using data attribute
   React.useEffect(() => {
     if (!mounted) {
       console.log("[PreferencesProvider] Font size effect - not mounted yet");
@@ -124,27 +114,14 @@ export function PreferencesProvider({
 
     console.log("[PreferencesProvider] Font size preference changed:", preferences.fontSize);
     const html = document.documentElement;
-    const multipliers = {
-      small: "0.875",
-      medium: "1",
-      large: "1.125",
-    };
-    const multiplier = multipliers[preferences.fontSize];
-    console.log("[PreferencesProvider] Setting font-size-multiplier to:", multiplier);
-    html.style.setProperty(
-      "--font-size-multiplier",
-      multiplier
-    );
     
-    // Verify it was set
-    const actualValue = html.style.getPropertyValue("--font-size-multiplier");
-    console.log("[PreferencesProvider] Font-size-multiplier after setting:", actualValue);
-    console.log("[PreferencesProvider] Computed font-size-multiplier:", window.getComputedStyle(html).getPropertyValue("--font-size-multiplier"));
+    // Set data attribute for CSS to pick up
+    html.setAttribute("data-font-size", preferences.fontSize);
+    console.log("[PreferencesProvider] Set data-font-size to:", preferences.fontSize);
     
-    // Check body font size
-    const body = document.body;
-    const bodyFontSize = window.getComputedStyle(body).fontSize;
-    console.log("[PreferencesProvider] Body computed font size:", bodyFontSize);
+    // Check computed font size
+    const computedFontSize = window.getComputedStyle(html).fontSize;
+    console.log("[PreferencesProvider] HTML computed font size:", computedFontSize);
   }, [preferences.fontSize, mounted]);
 
   // Save preferences to localStorage whenever they change

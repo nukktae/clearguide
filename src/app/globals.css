@@ -16,11 +16,9 @@
   --text-body: #3C3C3C;
   --text-subtext: #6D6D6D;
 
-  /* Font Size Multipliers */
+  /* Font Size Multipliers - Accessibility focused */
   --font-size-multiplier: 1;
-  --font-size-small: 0.875;
-  --font-size-medium: 1;
-  --font-size-large: 1.125;
+  --base-font-size: 16px;
 }
 
 /* Dark mode variables */
@@ -46,30 +44,39 @@
   --font-sans: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* HTML element gets the base font size for rem calculations */
+html {
+  font-size: calc(var(--base-font-size) * var(--font-size-multiplier));
+  transition: font-size 0.2s ease;
+}
+
 body {
   background: #FFFFFF;
   color: var(--text-body);
   font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: calc(15px * var(--font-size-multiplier));
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Removed all font-size: inherit rules - they were overriding Tailwind text size classes */
-/* Tailwind classes like text-4xl, text-lg, etc. now work properly */
-/* The font-size-multiplier only affects body text, not elements with explicit Tailwind classes */
+/* Font size classes that scale with the multiplier */
+/* Small font size mode */
+html[data-font-size="small"] {
+  --font-size-multiplier: 0.9;
+}
 
-/* Debug: Log font size changes */
-@media (prefers-reduced-motion: no-preference) {
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0;
-  }
+/* Medium/default font size mode */
+html[data-font-size="medium"] {
+  --font-size-multiplier: 1;
+}
+
+/* Large font size mode - for accessibility/elderly users */
+html[data-font-size="large"] {
+  --font-size-multiplier: 1.25;
+}
+
+/* Extra large for extreme accessibility needs */
+html[data-font-size="xlarge"] {
+  --font-size-multiplier: 1.4;
 }
 
 * {

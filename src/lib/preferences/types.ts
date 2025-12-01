@@ -1,5 +1,5 @@
 export type Language = "ko" | "en";
-export type FontSize = "small" | "medium" | "large";
+export type FontSize = "small" | "medium" | "large" | "xlarge";
 export type SummaryStyle = "brief" | "detailed" | "ultra-simple";
 export type AutoDeleteDays = "7" | "30" | "never";
 

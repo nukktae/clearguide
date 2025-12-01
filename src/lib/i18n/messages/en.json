@@ -212,7 +212,8 @@
         "fontSize": "Font Size",
         "small": "Small",
         "medium": "Normal",
-        "large": "Large"
+        "large": "Large",
+        "xlarge": "Extra Large"
       }
     }
   },

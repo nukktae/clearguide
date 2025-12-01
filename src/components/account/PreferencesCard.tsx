@@ -140,12 +140,11 @@ export function PreferencesCard({
           </div>
           <div className="space-y-2">
             <p className="text-sm text-[#6D6D6D] dark:text-gray-400">{t("account.preferences.screen.fontSize")}</p>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={fontSize === "small" ? "default" : "outline"}
                 size="sm"
                 onClick={() => onFontSizeChange("small")}
-                className="flex-1"
               >
                 {t("account.preferences.screen.small")}
               </Button>
@@ -153,7 +152,6 @@ export function PreferencesCard({
                 variant={fontSize === "medium" ? "default" : "outline"}
                 size="sm"
                 onClick={() => onFontSizeChange("medium")}
-                className="flex-1"
               >
                 {t("account.preferences.screen.medium")}
               </Button>
@@ -161,9 +159,15 @@ export function PreferencesCard({
                 variant={fontSize === "large" ? "default" : "outline"}
                 size="sm"
                 onClick={() => onFontSizeChange("large")}
-                className="flex-1"
               >
                 {t("account.preferences.screen.large")}
+              </Button>
+              <Button
+                variant={fontSize === "xlarge" ? "default" : "outline"}
+                size="sm"
+                onClick={() => onFontSizeChange("xlarge")}
+              >
+                {t("account.preferences.screen.xlarge")}
               </Button>
             </div>
           </div>

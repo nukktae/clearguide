@@ -16,7 +16,6 @@ import { TabbedDocumentViewer } from "@/src/components/document/TabbedDocumentVi
 import { CollapsibleMetadata } from "@/src/components/document/CollapsibleMetadata";
 import { SeverityRibbon } from "@/src/components/document/SeverityRibbon";
 import { FileText as FileTextIcon } from "lucide-react";
-import { demoDocuments, DEMO_TAX_ID, DEMO_COMMUNITY_ID, DEMO_PENALTY_ID } from "@/src/lib/demo/demoDocuments";
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -36,14 +35,6 @@ export default function DocumentDetailPage() {
     console.log("[Document Page] Loading document:", id);
     try {
       setIsLoading(true);
-      
-      // Handle demo documents
-      if (id === DEMO_TAX_ID || id === DEMO_COMMUNITY_ID || id === DEMO_PENALTY_ID) {
-        console.log("[Document Page] Loading demo document");
-        setDocument(demoDocuments[id]);
-        setIsLoading(false);
-        return;
-      }
 
       console.log("[Document Page] Fetching document from API...");
       const response = await fetch(`/app/api/documents/${id}`);

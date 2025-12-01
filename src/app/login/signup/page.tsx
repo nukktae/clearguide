@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/src/components/common/Button";
 import { Input } from "@/src/components/common/Input";
-import { Checkbox } from "@/src/components/common/Checkbox";
 import { Spinner } from "@/src/components/common/Spinner";
 import { signUpEmailPassword, signInWithGoogle } from "@/src/lib/firebase/auth";
 
@@ -14,7 +13,6 @@ export default function SignUpPage() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [agreedToTerms, setAgreedToTerms] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -27,11 +25,6 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
-    if (!agreedToTerms) {
-      setError("약관에 동의해주세요.");
-      return;
-    }
 
     // Validate password length
     if (password.length < 6) {
@@ -227,24 +220,6 @@ export default function SignUpPage() {
                 minLength={6}
                 className="w-full h-12 rounded-lg border border-gray-200 bg-[#F8F8F9] px-4 text-[#1C2329] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#1C2329] focus:border-transparent"
               />
-            </div>
-
-            {/* Terms Agreement */}
-            <div className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                id="terms"
-                checked={agreedToTerms}
-                onChange={(e) => {
-                  setAgreedToTerms(e.target.checked);
-                  setError(null);
-                }}
-                disabled={isLoading}
-                className="w-4 h-4 rounded border-gray-300 text-[#1C2329] focus:ring-[#1C2329] mt-0.5"
-              />
-              <label htmlFor="terms" className="text-sm text-[#4E535A] cursor-pointer">
-                이용약관 및 개인정보처리방침에 동의합니다
-              </label>
             </div>
 
             {/* Submit Button */}

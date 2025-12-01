@@ -213,7 +213,8 @@
         "fontSize": "글자 크기",
         "small": "작게",
         "medium": "보통",
-        "large": "크게"
+        "large": "크게",
+        "xlarge": "아주 크게"
       }
     }
   },

@@ -420,7 +420,7 @@ export default function AccountPage() {
                   console.log("[AccountPage] Called updatePreference('darkMode',", enabled, ")");
                 }}
                 fontSize={preferences.fontSize}
-                onFontSizeChange={(size) => updatePreference("fontSize", size as "small" | "medium" | "large")}
+                onFontSizeChange={(size) => updatePreference("fontSize", size as "small" | "medium" | "large" | "xlarge")}
               />
             </div>
           )}
