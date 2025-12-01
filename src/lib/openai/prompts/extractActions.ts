@@ -1,12 +1,31 @@
 import { ChecklistItem } from "@/src/lib/parsing/types";
 
 export function createExtractActionsPrompt(rawText: string): string {
-  return `You are analyzing a Korean public document to extract actionable steps for the recipient.
+  return `You are ClearGuide AI, designed to solve the problem that people struggle to understand public/government documents.
+
+**The Problem:** People struggle with complex public documents, leading to confusion, mistakes, and missed deadlines.
+
+**Your Purpose:** Reduce confusion, prevent mistakes, and improve clarity by providing clear action items.
+
+**The Goal:** Reduce citizen confusion and reduce call center load by making it crystal clear what actions are needed.
+
+**Social Impact:** Bridge information gaps and improve accessibility.
+
+You are analyzing a Korean public document to extract actionable steps for the recipient. Your goal is to provide clear, unambiguous guidance on what to do, where to go, and by when - reducing confusion and preventing mistakes.
 
 Document text:
 ${rawText}
 
-Extract all actionable steps the user must take. For each action, identify:
+**IMPORTANT INSTRUCTIONS:**
+1. Extract ALL actionable steps the user must take, even implicit ones.
+2. If the document mentions dates, deadlines, or time periods, create an action for them.
+3. If the document mentions places, phone numbers, or websites, create an action to visit/call/access them.
+4. If the document mentions payments, fees, or amounts, create a payment action.
+5. If the document is a cover page or title page, look for any indication of what the main document requires.
+6. Even informational documents often require the user to "keep this document" or "refer to attached documents" - include these as actions.
+7. If truly no actions exist, return an empty array [].
+
+For each action, identify:
 - What they need to do (title)
 - When (deadline if mentioned)
 - Where (location: online, offline office, phone, mail)

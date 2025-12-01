@@ -37,23 +37,28 @@ export default function CalendarPage() {
   const loadDeadlines = async () => {
     try {
       setIsLoading(true);
-      
+      setError(null);
+
       // Load both document deadlines and custom calendar events
       const [documentsResponse, calendarResponse] = await Promise.all([
         fetch("/app/api/documents"),
-        fetch("/app/api/calendar").catch(() => null), // Don't fail if calendar API fails
+        fetch("/app/api/calendar"),
       ]);
 
-      if (!documentsResponse.ok) {
-        throw new Error(t("calendar.loadError"));
+      let documents: DocumentRecord[] = [];
+      let allDeadlines: DeadlineItem[] = [];
+
+      // Process documents
+      if (documentsResponse.ok) {
+        const documentsData = await documentsResponse.json();
+        documents = documentsData.documents || [];
+      } else {
+        const errorData = await documentsResponse.json().catch(() => ({}));
+        console.error("[Calendar] Failed to load documents:", errorData.error || "문서 목록을 불러오는데 실패했습니다.");
+        // Continue without documents - we'll still show calendar events
       }
 
-      const documentsData = await documentsResponse.json();
-      const documents: DocumentRecord[] = documentsData.documents || [];
-
-      // Extract deadlines from all documents
-      const allDeadlines: DeadlineItem[] = [];
-
+      // Extract deadlines from documents
       documents.forEach((doc) => {
         if (!doc.parsed) return;
 
@@ -90,7 +95,7 @@ export default function CalendarPage() {
       });
 
       // Add custom calendar events
-      if (calendarResponse && calendarResponse.ok) {
+      if (calendarResponse.ok) {
         const calendarData = await calendarResponse.json();
         if (calendarData.success && calendarData.events) {
           calendarData.events.forEach((event: any) => {
@@ -106,6 +111,10 @@ export default function CalendarPage() {
             });
           });
         }
+      } else {
+        const errorData = await calendarResponse.json().catch(() => ({}));
+        console.error("[Calendar] Failed to load calendar events:", errorData.error || "캘린더 이벤트를 불러오는데 실패했습니다.");
+        // Continue without calendar events - we'll still show document deadlines
       }
 
       // Sort by deadline date (upcoming first)
@@ -117,7 +126,9 @@ export default function CalendarPage() {
 
       setDeadlines(allDeadlines);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("calendar.unknownError"));
+      console.error("[Calendar] Error loading deadlines:", err);
+      setError(err instanceof Error ? err.message : "일정을 불러오는데 실패했습니다.");
+      setDeadlines([]);
     } finally {
       setIsLoading(false);
     }

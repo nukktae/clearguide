@@ -22,6 +22,11 @@ service cloud.firestore {
       allow read, write: if true; // Temporary: allow all for testing
     }
     
+    // Calendar events collection - users can access their own calendar events
+    match /calendarEvents/{eventId} {
+      allow read, write: if true; // Temporary: allow all for testing
+    }
+    
     // Deny all other collections by default
     match /{document=**} {
       allow read, write: if false;

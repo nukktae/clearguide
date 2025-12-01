@@ -2,6 +2,35 @@
 
 A web-based AI assistant for Korean residents who receive public documents (세금고지서, 과태료, 주민센터 안내문 등) and need help understanding what they mean and what actions they must take.
 
+## The Problem
+
+Many people struggle to understand public/government documents they receive. This leads to:
+- **Confusion** due to complex official terminology and legal language
+- **Mistakes** and missed deadlines due to lack of understanding
+- **Increased call center load** as citizens seek help understanding documents
+
+This creates an information gap and accessibility issue that prevents many citizens from properly accessing the services they need.
+
+## The Solution
+
+ClearGuide uses AI to help people easily understand public documents by:
+
+1. **Document Summarization**: AI summarizes complex documents in plain, easy-to-understand language
+2. **Key Field Extraction**: Automatically extracts important fields and data from documents
+3. **Clear Action Items**: Provides step-by-step guidance on what to do, where to go, and by when
+
+## Goals & Social Impact
+
+**Primary Goals:**
+- Reduce citizen confusion
+- Prevent mistakes and missed deadlines
+- Reduce call center load and civil complaints
+
+**Social Impact:**
+- Bridge information gaps and improve accessibility
+- Enable all citizens to easily access and understand public services
+- Reduce the burden on government call centers and support staff
+
 ## Features
 
 - **Document Upload**: Upload PDFs or images of public documents

@@ -12,6 +12,10 @@ export const maxDuration = 60;
  * POST /app/api/checklist
  * Create a checklist for a document
  * 
+ * Purpose: Provide clear action items (what to do, where to go, by when) to reduce confusion
+ * Goal: Reduce citizen confusion and prevent missed deadlines
+ * Social Impact: Improve accessibility by making required actions crystal clear
+ * 
  * Headers:
  *   Authorization: Bearer <access-token> (required)
  *   Content-Type: application/json
@@ -70,6 +74,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log the OCR text being processed
+    console.log("[API Checklist] OCR text being processed:");
+    console.log("[API Checklist] Text length:", textToParse.length);
+    console.log("[API Checklist] Text content:", textToParse);
+    
     // Extract checklist
     let actions = await extractChecklist(textToParse);
     

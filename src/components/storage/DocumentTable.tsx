@@ -11,6 +11,7 @@ interface DocumentTableProps {
   onSummary?: (id: string) => void;
   onActionGuide?: (id: string) => void;
   onAddToCalendar?: (id: string) => void;
+  onRename?: (id: string, newName: string) => Promise<void>;
 }
 
 export function DocumentTable({
@@ -19,6 +20,7 @@ export function DocumentTable({
   onSummary,
   onActionGuide,
   onAddToCalendar,
+  onRename,
 }: DocumentTableProps) {
   const t = useTranslations();
   
@@ -29,7 +31,7 @@ export function DocumentTable({
   return (
     <div className="bg-white dark:bg-[#1E293B] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Table Header */}
-      <div className="grid grid-cols-[minmax(200px,1fr)_minmax(120px,auto)_minmax(100px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(200px,auto)_minmax(140px,auto)_minmax(100px,auto)_minmax(120px,auto)_minmax(100px,auto)] gap-4 md:gap-6 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-[minmax(200px,1fr)_minmax(80px,auto)_minmax(80px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(150px,auto)_minmax(120px,auto)_minmax(80px,auto)_minmax(100px,auto)_minmax(160px,auto)] gap-3 md:gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
         <div className="font-medium text-sm text-[#1A1A1A] dark:text-gray-100 flex items-center h-5">
           {t("documentTable.fileName")}
         </div>
@@ -45,7 +47,9 @@ export function DocumentTable({
         <div className="font-medium text-sm text-[#1A1A1A] dark:text-gray-100 flex items-center h-5">
           {t("documentTable.warnings")}
         </div>
-        <div className="hidden md:flex w-24 items-center h-5" /> {/* Actions spacer - only on desktop */}
+        <div className="hidden md:flex font-medium text-sm text-[#1A1A1A] dark:text-gray-100 items-center justify-end h-5">
+          {t("documentTable.actions")}
+        </div>
       </div>
 
       {/* Table Body */}
@@ -58,6 +62,7 @@ export function DocumentTable({
             onSummary={onSummary}
             onActionGuide={onActionGuide}
             onAddToCalendar={onAddToCalendar}
+            onRename={onRename}
           />
         ))}
       </div>

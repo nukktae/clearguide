@@ -14,6 +14,7 @@ export interface Summary {
   tone: "formal" | "friendly";
   mainSubject?: string;
   mainAction?: string;
+  suggestedFileName?: string; // AI-suggested descriptive filename
   entities?: {
     dates?: string[];
     names?: string[];

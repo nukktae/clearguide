@@ -30,14 +30,21 @@ export default function HistoryPage() {
   const loadDocuments = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+
       const response = await fetch("/app/api/documents");
       if (!response.ok) {
-        throw new Error(t("history.loadError"));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "문서 목록을 불러오는데 실패했습니다.");
       }
+
       const data = await response.json();
-      setAllDocuments(data.documents || []);
+      const documents = data.documents || [];
+      setAllDocuments(documents);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("history.unknownError"));
+      console.error("[History] Error loading documents:", err);
+      setError(err instanceof Error ? err.message : "문서 목록을 불러오는데 실패했습니다.");
+      setAllDocuments([]);
     } finally {
       setIsLoading(false);
     }
@@ -52,10 +59,10 @@ export default function HistoryPage() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (doc) =>
-          doc.fileName.toLowerCase().includes(query) ||
-          doc.parsed?.summary.docType.toLowerCase().includes(query) ||
-          doc.parsed?.summary.bullets.some((bullet) =>
-            bullet.toLowerCase().includes(query)
+          doc.fileName?.toLowerCase().includes(query) ||
+          doc.parsed?.summary?.docType?.toLowerCase().includes(query) ||
+          doc.parsed?.summary?.bullets?.some((bullet) =>
+            bullet?.toLowerCase().includes(query)
           )
       );
     }
@@ -63,8 +70,8 @@ export default function HistoryPage() {
     // Apply category filter
     if (activeFilter !== "all") {
       filtered = filtered.filter((doc) => {
-        const docType = doc.parsed?.summary.docType.toLowerCase() || "";
-        const fileType = doc.fileType.toLowerCase();
+        const docType = doc.parsed?.summary?.docType?.toLowerCase() || "";
+        const fileType = doc.fileType?.toLowerCase() || "";
 
         switch (activeFilter) {
           case "tax":
@@ -152,8 +159,8 @@ export default function HistoryPage() {
     };
 
     allDocuments.forEach((doc) => {
-      const docType = doc.parsed?.summary.docType.toLowerCase() || "";
-      const fileType = doc.fileType.toLowerCase();
+      const docType = doc.parsed?.summary?.docType?.toLowerCase() || "";
+      const fileType = doc.fileType?.toLowerCase() || "";
 
       if (
         docType.includes("세금") ||
@@ -213,6 +220,33 @@ export default function HistoryPage() {
 
   const handleAddToCalendar = (id: string) => {
     router.push(`/app/calendar`);
+  };
+
+  const handleRename = async (id: string, newName: string) => {
+    try {
+      const response = await fetch(`/app/api/documents/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fileName: newName }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "파일 이름 변경에 실패했습니다.");
+      }
+
+      // Update local state
+      setAllDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === id ? { ...doc, fileName: newName } : doc
+        )
+      );
+    } catch (err) {
+      console.error("[History] Error renaming document:", err);
+      throw err;
+    }
   };
 
   if (isLoading) {
@@ -276,6 +310,7 @@ export default function HistoryPage() {
               onSummary={handleSummary}
               onActionGuide={handleActionGuide}
               onAddToCalendar={handleAddToCalendar}
+              onRename={handleRename}
             />
           ) : (
             <DocumentGrid documents={sortedDocuments} onView={handleView} />

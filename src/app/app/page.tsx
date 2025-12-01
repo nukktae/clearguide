@@ -29,6 +29,8 @@ export default function AppPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [currentStep, setCurrentStep] = React.useState<number>(0);
   const [recentDocuments, setRecentDocuments] = React.useState<DocumentRecord[]>([]);
+  const [isLoadingRecentDocs, setIsLoadingRecentDocs] = React.useState(true);
+  const [recentDocsError, setRecentDocsError] = React.useState<string | null>(null);
   const router = useRouter();
   const t = useTranslations("common");
 
@@ -38,19 +40,35 @@ export default function AppPage() {
 
   const loadRecentDocuments = async () => {
     try {
+      setIsLoadingRecentDocs(true);
+      setRecentDocsError(null);
+
       const response = await fetch("/app/api/documents");
-      if (response.ok) {
-        const data = await response.json();
-        // Get most recent 5 documents
-        const sorted = (data.documents || []).sort(
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "문서 목록을 불러오는데 실패했습니다.");
+      }
+
+      const data = await response.json();
+      const documents = data.documents || [];
+      
+      // Get most recent 5 documents
+      if (documents.length > 0) {
+        const sorted = documents.sort(
           (a: DocumentRecord, b: DocumentRecord) =>
             new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
         );
         setRecentDocuments(sorted.slice(0, 5));
+      } else {
+        // No documents - show empty state
+        setRecentDocuments([]);
       }
     } catch (err) {
-      // Silently fail - recent documents are optional
       console.error("Failed to load recent documents:", err);
+      setRecentDocsError(err instanceof Error ? err.message : "문서 목록을 불러오는데 실패했습니다.");
+      setRecentDocuments([]);
+    } finally {
+      setIsLoadingRecentDocs(false);
     }
   };
 
@@ -183,6 +201,62 @@ export default function AppPage() {
         },
       };
 
+      // Save parsed document back to Firestore so it's available on document detail page
+      console.log("[AppPage] Saving parsed document to Firestore...");
+      try {
+        const saveResponse = await fetch("/app/api/documents", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            document: {
+              id: documentId,
+            },
+            parsedDocument: parsedDocument,
+          }),
+        });
+        
+        if (saveResponse.ok) {
+          console.log("[AppPage] Parsed document saved successfully");
+        } else {
+          const errorData = await saveResponse.json().catch(() => ({}));
+          console.warn("[AppPage] Failed to save parsed document:", errorData.error);
+        }
+      } catch (saveErr) {
+        console.error("[AppPage] Error saving parsed document:", saveErr);
+        // Don't fail the whole process if save fails
+      }
+
+      // Update file name with AI-suggested name if available
+      const suggestedFileName = summaryData.summary?.suggestedFileName;
+      if (suggestedFileName) {
+        console.log("[AppPage] AI suggested file name:", suggestedFileName);
+        try {
+          // Get the original file extension
+          const originalExt = file?.name.split('.').pop() || 'pdf';
+          const newFileName = `${suggestedFileName}.${originalExt}`;
+          
+          const renameResponse = await fetch(`/app/api/documents/${documentId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fileName: newFileName,
+            }),
+          });
+          
+          if (renameResponse.ok) {
+            console.log("[AppPage] File renamed to:", newFileName);
+          } else {
+            console.warn("[AppPage] Failed to rename file");
+          }
+        } catch (renameErr) {
+          console.error("[AppPage] Error renaming file:", renameErr);
+        }
+      }
+
       setUploadProgress(100);
       setParsedDocument(parsedDocument);
 
@@ -223,47 +297,60 @@ export default function AppPage() {
 
 
   return (
-    <div className="max-w-[1150px] mx-auto">
+    <div className="max-w-[1200px] mx-auto px-4 lg:px-6">
       {/* Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Left Column - Main Content (800-900px) */}
-        <div className="flex-1 w-full lg:max-w-[900px] space-y-8">
-          {/* Upload Card */}
-          <div className="flex flex-col items-center">
-            <h1 className="text-xl font-semibold text-[#1A1A1A] dark:text-gray-100 mb-4">
-            {t("uploadDocument")}
-          </h1>
-        <div className="w-full max-w-2xl">
+      <div className="flex flex-col lg:flex-row gap-12 items-start pt-8 pb-16">
+        {/* Left Column - Main Content */}
+        <div className="flex-1 w-full lg:max-w-[800px] space-y-10">
+          {/* Upload Section */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-semibold text-[#1C2329] dark:text-gray-100 mb-2 tracking-tight">
+                {t("uploadDocument")}
+              </h1>
+              <p className="text-base text-[#3C3C3C] dark:text-gray-300 font-normal">
+                공공문서를 업로드하여 AI 분석을 시작하세요
+              </p>
+            </div>
+            
             <UploadCard
               file={file}
               onFileSelect={handleFileSelect}
               onFileRemove={handleFileRemove}
               progress={isProcessing ? uploadProgress : undefined}
             />
-            </div>
-            </div>
+          </div>
 
           {/* Processing Stepper */}
           {isProcessing && (
-              <div className="p-12 bg-[#F8F8F9] dark:bg-[#1E293B] rounded-2xl border border-[#ECEEF3] dark:border-gray-700 shadow-[0_8px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)]">
-                <ParsingStepper steps={parsingSteps} currentStep={currentStep} />
+            <div className="bg-white dark:bg-[#0F172A] rounded-3xl p-10 border border-gray-100 dark:border-gray-800 shadow-sm">
+              <ParsingStepper steps={parsingSteps} currentStep={currentStep} />
             </div>
           )}
 
           {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-300">
-                <p className="font-medium">{t("errorOccurred")}</p>
-                <p className="text-sm mt-1">{error}</p>
-              </div>
-            )}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-2xl p-6">
+              <p className="font-medium text-red-900 dark:text-red-300 mb-1">{t("errorOccurred")}</p>
+              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            </div>
+          )}
 
           {/* Recent Documents */}
-          <RecentDocuments documents={recentDocuments} maxItems={5} />
-          </div>
+          {!isLoadingRecentDocs && recentDocuments.length > 0 && (
+            <RecentDocuments documents={recentDocuments} maxItems={5} />
+          )}
+          {!isLoadingRecentDocs && recentDocsError && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 rounded-2xl p-6">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                {recentDocsError}
+              </p>
+            </div>
+          )}
+        </div>
 
-        {/* Right Column - Sidebar (280-340px) */}
-        <div className="w-full lg:w-[320px] shrink-0 space-y-5 lg:sticky lg:top-20 lg:mt-11">
+        {/* Right Column - Sidebar */}
+        <div className="w-full lg:w-[340px] shrink-0 space-y-6 lg:sticky lg:top-24">
           {/* AI Assistant Widget */}
           <AIAssistantWidget />
 
@@ -273,17 +360,17 @@ export default function AppPage() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-32 pt-12 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex flex-wrap items-center justify-center gap-4 text-[12px] text-[#9BA0A7] dark:text-gray-500">
-          <Link href="/terms" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
+      <footer className="mt-24 pt-8 border-t border-gray-100 dark:border-gray-800">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#9BA0A7] dark:text-gray-500">
+          <Link href="/terms" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors font-light">
             이용약관
           </Link>
-          <span className="text-[#E0E0E0] dark:text-gray-700">|</span>
-          <Link href="/privacy" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
+          <span className="text-[#E0E0E0] dark:text-gray-700">·</span>
+          <Link href="/privacy" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors font-light">
             개인정보처리방침
           </Link>
-          <span className="text-[#E0E0E0] dark:text-gray-700">|</span>
-          <Link href="/contact" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors">
+          <span className="text-[#E0E0E0] dark:text-gray-700">·</span>
+          <Link href="/contact" className="hover:text-[#1C2329] dark:hover:text-gray-300 transition-colors font-light">
             문의하기
           </Link>
         </div>

@@ -11,6 +11,10 @@ export const maxDuration = 60;
  * POST /app/api/summary
  * Create a summary for a document
  * 
+ * Purpose: Reduce confusion by summarizing complex public documents in plain, easy-to-understand language
+ * Goal: Reduce citizen confusion and prevent mistakes
+ * Social Impact: Bridge information gaps and improve accessibility
+ * 
  * Headers:
  *   Authorization: Bearer <access-token> (required)
  *   Content-Type: application/json
@@ -69,6 +73,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log the OCR text being processed
+    console.log("[API Summary] OCR text being processed:");
+    console.log("[API Summary] Text length:", textToParse.length);
+    console.log("[API Summary] Text content:", textToParse);
+    
     // Extract summary
     const summary = await extractSummary(textToParse);
 

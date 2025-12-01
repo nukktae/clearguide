@@ -36,6 +36,17 @@ export function ActionChecklist({
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
   const [isAddingToCalendar, setIsAddingToCalendar] = React.useState<string | null>(null);
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log("[ActionChecklist] Props:", {
+      actionsCount: actions?.length || 0,
+      isLoading,
+      documentId,
+      documentName,
+      actions: actions?.slice(0, 2), // Log first 2 actions
+    });
+  }, [actions, isLoading, documentId, documentName]);
+
   // Extract location from document text on mount
   React.useEffect(() => {
     if (documentText) {
@@ -153,7 +164,7 @@ export function ActionChecklist({
         <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading || actions.length === 0 ? (
+        {isLoading ? (
           <div className="space-y-4">
             {/* Progress indicator */}
             <div className="flex items-center justify-center gap-2 py-2 mb-4">
@@ -192,6 +203,12 @@ export function ActionChecklist({
                 </div>
               </div>
             ))}
+          </div>
+        ) : actions.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-[#6D6D6D] dark:text-gray-400">
+              이 문서에는 추출된 행동 항목이 없습니다.
+            </p>
           </div>
         ) : (
           <div className="space-y-4">

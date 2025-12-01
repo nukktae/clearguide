@@ -20,9 +20,46 @@ export function TabbedDocumentViewer({
   const [activeTab, setActiveTab] = React.useState<"preview" | "text">("preview");
   const [ocrText, setOcrText] = React.useState<string | null>(null);
   const [isLoadingOcr, setIsLoadingOcr] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
+  
   const isPDF = document.fileType === "application/pdf";
-  const isImage = document.fileType.startsWith("image/");
-  const fileUrl = document.filePath ? `/app/api/files/${document.filePath}` : undefined;
+  const isImage = document.fileType?.startsWith("image/") ?? false;
+  
+  // Construct file URL - try filePath first, then fallback to document ID + extension
+  const getFileUrl = (): string | undefined => {
+    if (document.filePath) {
+      return `/app/api/files/${document.filePath}`;
+    }
+    // Fallback: try to construct from document ID and file type
+    if (document.id && document.fileType) {
+      const extension = isPDF ? '.pdf' : 
+                       document.fileType.includes('jpeg') || document.fileType.includes('jpg') ? '.jpg' :
+                       document.fileType.includes('png') ? '.png' : '';
+      if (extension) {
+        return `/app/api/files/${document.id}${extension}`;
+      }
+    }
+    return undefined;
+  };
+  
+  const fileUrl = getFileUrl();
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log("[TabbedDocumentViewer] Document props:", {
+      id: document.id,
+      fileName: document.fileName,
+      fileType: document.fileType,
+      filePath: document.filePath,
+      hasFileUrl: !!fileUrl,
+      fileUrl,
+    });
+  }, [document.id, document.filePath, fileUrl]);
+
+  // Reset image error when fileUrl changes
+  React.useEffect(() => {
+    setImageError(false);
+  }, [fileUrl]);
 
   // Fetch OCR text when text tab is active
   React.useEffect(() => {
@@ -118,11 +155,27 @@ export function TabbedDocumentViewer({
                     className="w-full h-full"
                   />
                 ) : isImage ? (
+                  imageError ? (
+                    <div className="text-center p-8">
+                      <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-sm text-gray-500 mb-2">이미지를 불러올 수 없습니다</p>
+                      <p className="text-xs text-gray-400">파일 경로: {document.filePath || "없음"}</p>
+                    </div>
+                  ) : (
                   <img
                     src={fileUrl}
                     alt={document.fileName}
                     className="max-w-full max-h-full object-contain rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
+                      onError={() => {
+                        console.error("[TabbedDocumentViewer] Image load error:", fileUrl);
+                        setImageError(true);
+                      }}
+                      onLoad={() => {
+                        console.log("[TabbedDocumentViewer] Image loaded successfully:", fileUrl);
+                        setImageError(false);
+                      }}
                   />
+                  )
                 ) : (
                   <div className="text-center p-8">
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -137,17 +190,28 @@ export function TabbedDocumentViewer({
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-sm text-gray-500 mb-2">PDF 문서</p>
                     <p className="text-xs text-gray-400">원본 파일은 저장되지 않았습니다</p>
+                    {document.filePath && (
+                      <p className="text-xs text-gray-400 mt-1">파일 경로: {document.filePath}</p>
+                    )}
                   </>
                 ) : isImage ? (
                   <>
                     <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-sm text-gray-500 mb-2">이미지 파일</p>
                     <p className="text-xs text-gray-400">원본 파일은 저장되지 않았습니다</p>
+                    {document.filePath && (
+                      <p className="text-xs text-gray-400 mt-1">파일 경로: {document.filePath}</p>
+                    )}
                   </>
                 ) : (
                   <>
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-sm text-gray-500">문서 미리보기</p>
+                    <p className="text-sm text-gray-500 mb-2">문서 미리보기</p>
+                    {document.filePath ? (
+                      <p className="text-xs text-gray-400 mt-1">파일 경로: {document.filePath}</p>
+                    ) : (
+                      <p className="text-xs text-gray-400 mt-1">파일 경로가 없습니다</p>
+                    )}
                   </>
                 )}
               </div>

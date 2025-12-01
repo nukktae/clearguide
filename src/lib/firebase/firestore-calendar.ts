@@ -56,6 +56,9 @@ export async function saveCalendarEvent(
   eventData: Omit<CalendarEventData, "userId">
 ): Promise<string> {
   try {
+    console.log("[Firestore Calendar] Saving calendar event for user:", userId);
+    console.log("[Firestore Calendar] Event data:", eventData);
+    
     const event: Omit<FirestoreCalendarEvent, "id"> = {
       userId,
       ...eventData,
@@ -63,14 +66,22 @@ export async function saveCalendarEvent(
       updatedAt: Timestamp.now(),
     };
     
+    console.log("[Firestore Calendar] Full event object:", event);
+    
     const eventId = await createDocument<FirestoreCalendarEvent>(
       CALENDAR_COLLECTION_NAME,
       event as any
     );
     
+    console.log("[Firestore Calendar] Event saved successfully:", eventId);
     return eventId;
   } catch (error) {
     console.error("[Firestore Calendar] Error saving calendar event:", error);
+    console.error("[Firestore Calendar] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 }
@@ -155,15 +166,39 @@ export async function getAllUserCalendarEvents(
   }
 ): Promise<CalendarEvent[]> {
   try {
+    console.log("[Firestore Calendar] Getting events for user:", userId);
+    
+    let events: (FirestoreCalendarEvent & { id: string })[];
+    
+    try {
+      // Try with orderBy first (requires composite index)
     const constraints = [
       where("userId", "==", userId),
       orderBy("deadline", "asc"),
     ];
     
-    const events = await getDocuments<FirestoreCalendarEvent & { id: string }>(
+      events = await getDocuments<FirestoreCalendarEvent & { id: string }>(
+        CALENDAR_COLLECTION_NAME,
+        constraints
+      );
+    } catch (indexError) {
+      // If index doesn't exist, query without orderBy and sort manually
+      console.warn("[Firestore Calendar] Index missing, querying without orderBy:", indexError);
+      
+      const constraints = [
+        where("userId", "==", userId),
+      ];
+      
+      events = await getDocuments<FirestoreCalendarEvent & { id: string }>(
       CALENDAR_COLLECTION_NAME,
       constraints
     );
+      
+      // Sort manually by deadline
+      events.sort((a, b) => (a.deadline || "").localeCompare(b.deadline || ""));
+    }
+    
+    console.log("[Firestore Calendar] Found events:", events.length);
     
     let filteredEvents = events.map((doc) => {
       // Convert Firestore Timestamp to Date

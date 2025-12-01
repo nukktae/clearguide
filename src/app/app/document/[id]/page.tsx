@@ -56,8 +56,16 @@ export default function DocumentDetailPage() {
       console.log("[Document Page] Document loaded:", {
         id: data.document?.id,
         fileName: data.document?.fileName,
+        fileType: data.document?.fileType,
+        filePath: data.document?.filePath,
         hasParsed: !!data.document?.parsed,
+        allFields: Object.keys(data.document || {}),
       });
+      
+      // Warn if critical fields are missing (document may have been corrupted by previous save)
+      if (data.document && (!data.document.fileName || !data.document.filePath)) {
+        console.warn("[Document Page] Document is missing critical fields! Document may have been corrupted by a previous save. Consider re-uploading.");
+      }
       
       let document = data.document;
       
@@ -72,7 +80,16 @@ export default function DocumentDetailPage() {
           if (summaryResponse.ok) {
             const summaryData = await summaryResponse.json();
             summary = summaryData.summary?.summary || summaryData.summaries?.[0]?.summary;
-            console.log("[Document Page] Summary fetched:", !!summary);
+            console.log("[Document Page] Summary fetched:", {
+              hasSummary: !!summary,
+              summaryKeys: summary ? Object.keys(summary) : [],
+            });
+          } else {
+            const errorData = await summaryResponse.json().catch(() => ({}));
+            console.warn("[Document Page] Summary fetch failed:", {
+              status: summaryResponse.status,
+              error: errorData.error,
+            });
           }
           
           // Fetch checklist
@@ -80,8 +97,23 @@ export default function DocumentDetailPage() {
           let actions = [];
           if (checklistResponse.ok) {
             const checklistData = await checklistResponse.json();
+            console.log("[Document Page] Checklist API response:", {
+              hasChecklist: !!checklistData.checklist,
+              hasChecklists: !!checklistData.checklists,
+              checklistKeys: checklistData.checklist ? Object.keys(checklistData.checklist) : [],
+              rawResponse: JSON.stringify(checklistData).substring(0, 200),
+            });
             actions = checklistData.checklist?.actions || checklistData.checklists?.[0]?.actions || [];
-            console.log("[Document Page] Checklist fetched:", actions.length, "actions");
+            console.log("[Document Page] Checklist fetched:", {
+              actionsCount: actions.length,
+              actions: actions.slice(0, 2), // Log first 2 actions
+            });
+          } else {
+            const errorData = await checklistResponse.json().catch(() => ({}));
+            console.warn("[Document Page] Checklist fetch failed:", {
+              status: checklistResponse.status,
+              error: errorData.error,
+            });
           }
           
           // Fetch risks from parse endpoint (optional - needs ocrId)
@@ -89,31 +121,52 @@ export default function DocumentDetailPage() {
           const risks: any[] = [];
           console.log("[Document Page] Skipping risks fetch - ocrId not available in document detail page");
           
-          // Combine into parsed document if we have at least summary or checklist
-          if (summary || actions.length > 0) {
-            const parsedDocument: ParsedDocument = {
+          // Always create parsed document, even if empty (so we can show empty states)
+          const parsedDocument: ParsedDocument = {
+            documentId: id,
+            summary: summary || {
+              bullets: [],
+              docType: "공공문서",
+              tone: "friendly",
+            },
+            actions: actions,
+            risks: risks,
+            meta: {
+              parsedAt: new Date().toISOString(),
+              confidence: 0.85,
+              language: "ko",
+            },
+          };
+          document = {
+            ...document,
+            parsed: parsedDocument,
+          };
+          console.log("[Document Page] Combined parsed document from separate endpoints:", {
+            hasSummary: !!summary,
+            actionsCount: actions.length,
+            risksCount: risks.length,
+          });
+        } catch (fetchErr) {
+          console.error("[Document Page] Failed to fetch summary/checklist:", fetchErr);
+          // Still create empty parsed document so page can render
+          document = {
+            ...document,
+            parsed: {
               documentId: id,
-              summary: summary || {
+              summary: {
                 bullets: [],
                 docType: "공공문서",
                 tone: "friendly",
               },
-              actions: actions,
-              risks: risks,
+              actions: [],
+              risks: [],
               meta: {
                 parsedAt: new Date().toISOString(),
-                confidence: 0.85,
+                confidence: 0,
                 language: "ko",
               },
-            };
-            document = {
-              ...document,
-              parsed: parsedDocument,
-            };
-            console.log("[Document Page] Combined parsed document from separate endpoints");
-          }
-        } catch (fetchErr) {
-          console.warn("[Document Page] Failed to fetch summary/checklist:", fetchErr);
+            },
+          };
         }
       }
       

@@ -67,11 +67,11 @@ export function UploadDropzone({
   return (
     <div
       className={cn(
-        "relative border-[1.5px] border-dashed rounded-[14px] h-[260px] text-center transition-all",
-        "bg-white dark:bg-gray-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]",
+        "relative border-2 border-dashed rounded-3xl h-[320px] text-center transition-all duration-300",
+        "bg-[#FAFAFA] dark:bg-[#1E293B]",
         isDragging
-          ? "border-[#2DB7A3] dark:border-teal-400 bg-[#2DB7A3]/5 dark:bg-teal-400/10"
-          : "border-[#D4D7DD] dark:border-gray-600 hover:border-[#1C2329]/30 dark:hover:border-blue-400/50",
+          ? "border-[#2DB7A3] dark:border-[#2DB7A3] bg-[#2DB7A3]/5 dark:bg-[#2DB7A3]/10 scale-[1.02]"
+          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600",
         className
       )}
       onDragOver={handleDragOver}
@@ -85,19 +85,21 @@ export function UploadDropzone({
         onChange={handleFileInput}
         className="hidden"
       />
-      <div className="flex flex-col items-center justify-center h-full gap-6">
-        <UploadCloud className="h-12 w-12 text-[#1A2B4A] dark:text-blue-400" strokeWidth={1.75} />
+      <div className="flex flex-col items-center justify-center h-full gap-8 px-8">
+        <div className="w-16 h-16 rounded-full bg-[#F5F5F7] dark:bg-[#2A3441] flex items-center justify-center">
+          <UploadCloud className="h-8 w-8 text-[#6D6D6D] dark:text-gray-400" strokeWidth={1.5} />
+        </div>
         <div className="flex flex-col items-center gap-3">
-          <p className="text-base font-medium text-[#1A1A1A] dark:text-gray-100">
+          <p className="text-lg font-medium text-[#1C2329] dark:text-gray-100 tracking-tight">
             파일을 여기로 끌어다 놓거나 클릭하여 업로드하세요
           </p>
-          <p className="text-[13px] text-[#6D6D6D] dark:text-gray-400 opacity-60">
+          <p className="text-sm text-[#6D6D6D] dark:text-gray-400 font-light">
             PDF, JPG, PNG (최대 10MB)
           </p>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1C2329] text-white rounded-full font-medium hover:bg-[#2A3441] hover:shadow-md transition-all duration-200 mt-2"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1C2329] dark:bg-white text-white dark:text-[#1C2329] rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-100 transition-all duration-200 mt-4 shadow-sm hover:shadow-md"
           >
             <File className="h-4 w-4" strokeWidth={1.5} />
             파일 선택

@@ -55,6 +55,31 @@
     "maxSize": "Max size: 10MB"
   },
   "landing": {
+    "problem": {
+      "title": "The Problem: Understanding Public Documents",
+      "description": "Many people struggle to understand documents they receive from public agencies and government offices.",
+      "challenges": {
+        "confusion": "Confusion due to complex official terminology and legal language",
+        "mistakes": "Mistakes and missed deadlines due to lack of understanding",
+        "overload": "Increased citizen inquiries overwhelming call centers"
+      },
+      "impact": "Information gaps and accessibility issues prevent many citizens from properly accessing the services they need."
+    },
+    "solution": {
+      "title": "Clear Guidance Powered by AI",
+      "description": "ClearGuide uses AI to help people easily understand public documents.",
+      "aiFeatures": {
+        "summarize": "Document Summarization: Simplifies complex content into clear, easy-to-understand language",
+        "extract": "Key Field Extraction: Automatically extracts important fields and data",
+        "actions": "Clear Action Items: Guides what to do, where to go, and by when"
+      },
+      "goals": {
+        "reduceConfusion": "Reduce citizen confusion",
+        "preventMistakes": "Prevent mistakes",
+        "reduceLoad": "Reduce call center load"
+      },
+      "socialImpact": "Bridging information gaps and improving accessibility so all citizens can easily access public services."
+    },
     "hero": {
       "title": "Public documents, understood at a glance",
       "subtitle": "AI easily interprets complex public documents and clearly guides you on necessary actions and deadlines.",
@@ -200,14 +225,6 @@
     "loadError": "Failed to load document list.",
     "unknownError": "Unknown error"
   },
-  "calendar": {
-    "title": "My Calendar",
-    "subtitle": "View deadlines and important dates extracted from your documents at a glance.",
-    "loadError": "Failed to load document list.",
-    "unknownError": "Unknown error",
-    "emptyTitle": "No scheduled events this month.",
-    "emptySubtitle": "Deadlines will be automatically added when you upload documents."
-  },
   "emptyState": {
     "title": "Archive is empty",
     "subtitle": "Upload documents and they will be automatically analyzed and managed here.",
@@ -245,6 +262,7 @@
     "uploadDate": "Upload Date",
     "analysisStatus": "Analysis Status",
     "warnings": "Warnings",
+    "actions": "Actions",
     "completed": "Completed",
     "overdue": "Overdue",
     "items": "items",

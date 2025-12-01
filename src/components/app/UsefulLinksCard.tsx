@@ -9,7 +9,7 @@ interface LinkItem {
   id: string;
   label: string;
   url: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
 const usefulLinks: LinkItem[] = [
@@ -53,12 +53,12 @@ export function UsefulLinksCard() {
   };
 
   return (
-    <div className="bg-transparent dark:bg-transparent">
-      <h3 className="text-xs font-medium text-[#9BA0A7] dark:text-gray-500 mb-3 uppercase tracking-wider">
+    <div className="bg-white dark:bg-[#0F172A] rounded-3xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+      <h3 className="text-xs font-medium text-[#3C3C3C] dark:text-gray-300 mb-4 uppercase tracking-wider">
         {t("usefulLinks.title")}
       </h3>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {usefulLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -66,18 +66,18 @@ export function UsefulLinksCard() {
               key={link.id}
               onClick={() => handleLinkClick(link.url)}
               className={cn(
-                "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md",
-                "text-[#6D6D6D] dark:text-gray-400",
-                "hover:text-[#1A1A1A] dark:hover:text-gray-200",
-                "hover:bg-gray-50/50 dark:hover:bg-gray-800/30",
-                "transition-all group"
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl",
+                "text-[#1C2329] dark:text-gray-100",
+                "hover:text-[#1C2329] dark:hover:text-gray-100",
+                "hover:bg-[#F5F5F7] dark:hover:bg-[#1E293B]",
+                "transition-all duration-200 group"
               )}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0 text-[#9BA0A7] dark:text-gray-500 group-hover:text-[#6D6D6D] dark:group-hover:text-gray-400 transition-colors" />
-              <span className="flex-1 text-left text-xs text-[#6D6D6D] dark:text-gray-400 group-hover:text-[#1A1A1A] dark:group-hover:text-gray-200 transition-colors">
+              <Icon className="h-4 w-4 shrink-0 text-[#3C3C3C] dark:text-gray-300 group-hover:text-[#1C2329] dark:group-hover:text-gray-100 transition-colors" strokeWidth={1.5} />
+              <span className="flex-1 text-left text-sm text-[#1C2329] dark:text-gray-100 group-hover:text-[#1C2329] dark:group-hover:text-gray-100 transition-colors font-normal">
                 {link.label}
               </span>
-              <ExternalLink className="h-3 w-3 shrink-0 text-[#9BA0A7] dark:text-gray-600 group-hover:text-[#6D6D6D] dark:group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-[#3C3C3C] dark:text-gray-400 group-hover:text-[#1C2329] dark:group-hover:text-gray-100 transition-all opacity-0 group-hover:opacity-100" strokeWidth={1.5} />
             </button>
           );
         })}

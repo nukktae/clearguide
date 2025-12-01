@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/src/components/common/Button";
-import { FileText, CheckCircle2, AlertTriangle, Calendar, Shield, Sparkles, Lock } from "lucide-react";
+import { FileText, CheckCircle2, AlertTriangle, Calendar, Shield, Sparkles, Lock, AlertCircle, XCircle, Phone } from "lucide-react";
 import { FontSizeDebugger } from "@/src/components/debug/FontSizeDebugger";
 import { DocumentTypes } from "@/src/components/app/DocumentTypes";
 import Image from "next/image";
@@ -68,6 +68,154 @@ export default function HomePage() {
 
         {/* Faint divider line */}
         <div className="border-t border-gray-100 dark:border-gray-700 mt-16 lg:mt-24" />
+      </div>
+
+      {/* Problem Section - Apple-like Design */}
+      <div className="bg-[#FFFFFF] dark:bg-[#0F172A] py-32 mt-12">
+        <div className="container mx-auto px-4 lg:px-6">
+          <div className="max-w-5xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-20">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-[#1C2329] dark:text-gray-100 mb-6 tracking-tight">
+                {t("landing.problem.title")}
+              </h2>
+              <p className="text-xl sm:text-2xl text-[#6D6D6D] dark:text-gray-400 max-w-3xl mx-auto leading-relaxed font-light">
+                {t("landing.problem.description")}
+              </p>
+            </div>
+            
+            {/* Challenges Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+              {/* Challenge 1 */}
+              <div className="group">
+                <div className="bg-[#FAFAFA] dark:bg-[#1E293B] rounded-2xl p-8 h-full border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                  <div className="w-12 h-12 rounded-full bg-[#F5F5F7] dark:bg-[#2A3441] flex items-center justify-center mb-6 group-hover:bg-[#E8E8ED] dark:group-hover:bg-[#344152] transition-colors">
+                    <AlertCircle className="h-6 w-6 text-[#6D6D6D] dark:text-gray-400" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-lg font-medium text-[#1C2329] dark:text-gray-100 mb-3 leading-snug">
+                    {t("landing.problem.challenges.confusion")}
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Challenge 2 */}
+              <div className="group">
+                <div className="bg-[#FAFAFA] dark:bg-[#1E293B] rounded-2xl p-8 h-full border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                  <div className="w-12 h-12 rounded-full bg-[#F5F5F7] dark:bg-[#2A3441] flex items-center justify-center mb-6 group-hover:bg-[#E8E8ED] dark:group-hover:bg-[#344152] transition-colors">
+                    <XCircle className="h-6 w-6 text-[#6D6D6D] dark:text-gray-400" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-lg font-medium text-[#1C2329] dark:text-gray-100 mb-3 leading-snug">
+                    {t("landing.problem.challenges.mistakes")}
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Challenge 3 */}
+              <div className="group">
+                <div className="bg-[#FAFAFA] dark:bg-[#1E293B] rounded-2xl p-8 h-full border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                  <div className="w-12 h-12 rounded-full bg-[#F5F5F7] dark:bg-[#2A3441] flex items-center justify-center mb-6 group-hover:bg-[#E8E8ED] dark:group-hover:bg-[#344152] transition-colors">
+                    <Phone className="h-6 w-6 text-[#6D6D6D] dark:text-gray-400" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-lg font-medium text-[#1C2329] dark:text-gray-100 mb-3 leading-snug">
+                    {t("landing.problem.challenges.overload")}
+                  </h3>
+                </div>
+              </div>
+            </div>
+            
+            {/* Impact Statement */}
+            <div className="bg-[#F5F5F7] dark:bg-[#1E293B] rounded-3xl p-12 border border-gray-200 dark:border-gray-800">
+              <p className="text-lg sm:text-xl text-[#1C2329] dark:text-gray-100 text-center leading-relaxed font-light max-w-3xl mx-auto">
+                {t("landing.problem.impact")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Solution Section - Apple-like Design */}
+      <div className="bg-[#F5F5F7] dark:bg-[#1E293B] py-32">
+        <div className="container mx-auto px-4 lg:px-6">
+          <div className="max-w-5xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-20">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-[#1C2329] dark:text-gray-100 mb-6 tracking-tight">
+                {t("landing.solution.title")}
+              </h2>
+              <p className="text-xl sm:text-2xl text-[#6D6D6D] dark:text-gray-400 max-w-3xl mx-auto leading-relaxed font-light">
+                {t("landing.solution.description")}
+              </p>
+            </div>
+            
+            {/* AI Features */}
+            <div className="space-y-4 mb-16">
+              <div className="group bg-white dark:bg-[#0F172A] rounded-2xl p-8 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-xl bg-[#2DB7A3]/10 dark:bg-[#2DB7A3]/20 flex items-center justify-center shrink-0 group-hover:bg-[#2DB7A3]/15 dark:group-hover:bg-[#2DB7A3]/25 transition-colors">
+                    <Sparkles className="h-7 w-7 text-[#2DB7A3]" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 pt-1">
+                    <h3 className="text-xl font-medium text-[#1C2329] dark:text-gray-100 leading-snug">
+                      {t("landing.solution.aiFeatures.summarize")}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="group bg-white dark:bg-[#0F172A] rounded-2xl p-8 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-xl bg-[#2DB7A3]/10 dark:bg-[#2DB7A3]/20 flex items-center justify-center shrink-0 group-hover:bg-[#2DB7A3]/15 dark:group-hover:bg-[#2DB7A3]/25 transition-colors">
+                    <FileText className="h-7 w-7 text-[#2DB7A3]" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 pt-1">
+                    <h3 className="text-xl font-medium text-[#1C2329] dark:text-gray-100 leading-snug">
+                      {t("landing.solution.aiFeatures.extract")}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="group bg-white dark:bg-[#0F172A] rounded-2xl p-8 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-lg">
+                <div className="flex items-start gap-6">
+                  <div className="w-14 h-14 rounded-xl bg-[#2DB7A3]/10 dark:bg-[#2DB7A3]/20 flex items-center justify-center shrink-0 group-hover:bg-[#2DB7A3]/15 dark:group-hover:bg-[#2DB7A3]/25 transition-colors">
+                    <CheckCircle2 className="h-7 w-7 text-[#2DB7A3]" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 pt-1">
+                    <h3 className="text-xl font-medium text-[#1C2329] dark:text-gray-100 leading-snug">
+                      {t("landing.solution.aiFeatures.actions")}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Goals */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+              <div className="bg-white dark:bg-[#0F172A] rounded-xl p-6 border border-gray-100 dark:border-gray-800 text-center">
+                <div className="text-base font-medium text-[#1C2329] dark:text-gray-100">
+                  {t("landing.solution.goals.reduceConfusion")}
+                </div>
+              </div>
+              <div className="bg-white dark:bg-[#0F172A] rounded-xl p-6 border border-gray-100 dark:border-gray-800 text-center">
+                <div className="text-base font-medium text-[#1C2329] dark:text-gray-100">
+                  {t("landing.solution.goals.preventMistakes")}
+                </div>
+              </div>
+              <div className="bg-white dark:bg-[#0F172A] rounded-xl p-6 border border-gray-100 dark:border-gray-800 text-center">
+                <div className="text-base font-medium text-[#1C2329] dark:text-gray-100">
+                  {t("landing.solution.goals.reduceLoad")}
+                </div>
+              </div>
+            </div>
+            
+            {/* Social Impact */}
+            <div className="bg-white dark:bg-[#0F172A] rounded-3xl p-12 border border-gray-200 dark:border-gray-800">
+              <p className="text-lg sm:text-xl text-[#1C2329] dark:text-gray-100 text-center leading-relaxed font-light max-w-3xl mx-auto">
+                {t("landing.solution.socialImpact")}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Features Section - Card Style */}

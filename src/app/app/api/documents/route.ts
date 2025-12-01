@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getAllUserDocuments,
   saveDocument,
+  updateDocumentById,
+  getDocumentById,
 } from "@/src/lib/firebase/firestore-documents";
 import { DocumentRecord, ParsedDocument } from "@/src/lib/parsing/types";
 import { requireAuth } from "@/src/lib/auth/api-auth";
@@ -89,13 +91,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if document already exists - if so, only update the parsed field
+    // This preserves original document fields like fileName, fileType, filePath
+    const existingDoc = await getDocumentById(document.id, userId);
+    
+    if (existingDoc) {
+      // Document exists - update only the parsed field
+      console.log("[API Documents] Document exists, updating parsed field only...");
+      await updateDocumentById(document.id, { parsed: parsedDocument }, userId);
+      
+      // Return the existing document with updated parsed data
+      const updatedDoc = {
+        ...existingDoc,
+        parsed: parsedDocument,
+      };
+      
+      console.log("[API Documents] Document updated:", {
+        documentId: updatedDoc.id,
+        hasParsed: !!updatedDoc.parsed,
+        fileName: updatedDoc.fileName,
+        filePath: updatedDoc.filePath,
+      });
+
+      console.log("[API Documents] ===== SAVE DOCUMENT SUCCESS =====");
+      return NextResponse.json({
+        success: true,
+        document: updatedDoc,
+      });
+    } else {
+      // New document - create it
     const documentRecord: DocumentRecord = {
       ...document,
       parsed: parsedDocument as ParsedDocument | undefined,
     };
 
     // Save to Firestore with userId
-    console.log("[API Documents] Saving document to Firestore...");
+      console.log("[API Documents] Saving new document to Firestore...");
     const saved = await saveDocument(documentRecord, userId);
     console.log("[API Documents] Document saved:", {
       documentId: saved.id,
@@ -107,6 +138,7 @@ export async function POST(request: NextRequest) {
       success: true,
       document: saved,
     });
+    }
   } catch (error) {
     console.error("Save document error:", error);
     

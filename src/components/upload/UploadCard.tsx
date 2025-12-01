@@ -20,7 +20,7 @@ export function UploadCard({
   const t = useTranslations("upload");
 
   return (
-    <div className="bg-white dark:bg-[#1E293B] border border-[#ECEEF3] dark:border-gray-700 rounded-2xl shadow-[0_8px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.3)] p-16 lg:p-20">
+    <div className="bg-white dark:bg-[#0F172A] border border-gray-100 dark:border-gray-800 rounded-3xl shadow-sm p-12 lg:p-16">
       {!file ? (
         <UploadDropzone onFileSelect={onFileSelect} />
       ) : (

@@ -88,6 +88,17 @@ export async function POST(request: NextRequest) {
 
     // Create calendar event
     console.log("[API Calendar] Creating calendar event...");
+    console.log("[API Calendar] Event data:", {
+      title,
+      description,
+      deadline,
+      urgency,
+      documentId,
+      documentName,
+      type,
+      severity,
+    });
+    
     const eventId = await saveCalendarEvent(userId, {
       title,
       description,
@@ -98,6 +109,7 @@ export async function POST(request: NextRequest) {
       type,
       severity,
     });
+    console.log("[API Calendar] Event saved with ID:", eventId);
 
     // Get the created event
     const { getCalendarEventById } = await import("@/src/lib/firebase/firestore-calendar");
@@ -120,13 +132,29 @@ export async function POST(request: NextRequest) {
       event,
     });
   } catch (error) {
-    console.error("[API] Create calendar event error:", error);
+    console.error("[API Calendar] Create calendar event error:", error);
+    console.error("[API Calendar] Error stack:", error instanceof Error ? error.stack : "No stack");
+    console.error("[API Calendar] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+    });
     
     // Handle authentication errors
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return NextResponse.json(
         { error: "인증이 필요합니다." },
         { status: 401 }
+      );
+    }
+    
+    // Handle Firestore index errors
+    if (error instanceof Error && error.message.includes("index")) {
+      return NextResponse.json(
+        {
+          error: "Firestore 인덱스가 필요합니다. Firebase 콘솔에서 인덱스를 생성해주세요.",
+          details: error.message,
+        },
+        { status: 500 }
       );
     }
     

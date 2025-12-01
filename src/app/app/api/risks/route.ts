@@ -11,6 +11,10 @@ export const maxDuration = 60;
  * POST /app/api/risks
  * Create risk alerts for a document
  * 
+ * Purpose: Identify critical information (penalties, deadlines, warnings) to prevent mistakes
+ * Goal: Reduce citizen confusion and reduce call center load by proactively alerting users
+ * Social Impact: Prevent missed deadlines and benefit cancellations
+ * 
  * Headers:
  *   Authorization: Bearer <access-token> (required)
  *   Content-Type: application/json
