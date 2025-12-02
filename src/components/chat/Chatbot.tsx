@@ -12,9 +12,10 @@ interface ChatbotProps {
     documentId: string;
     documentName: string;
   } | null;
+  onDocumentUploaded?: (documentId: string, documentName: string) => void;
 }
 
-export function Chatbot({ documentContext }: ChatbotProps) {
+export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMinimized, setIsMinimized] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
@@ -50,13 +51,13 @@ export function Chatbot({ documentContext }: ChatbotProps) {
     }
   };
 
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim()) return;
+  const handleSendMessage = async (message: string, file?: File, fileDocumentId?: string) => {
+    if (!message.trim() && !file) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
-      content: message,
+      content: message || (file ? `📎 ${file.name}` : ""),
       timestamp: new Date(),
     };
 
@@ -64,24 +65,53 @@ export function Chatbot({ documentContext }: ChatbotProps) {
     setIsLoading(true);
 
     try {
-      const requestBody = {
-        message,
-        conversationId: conversationId || undefined,
-        documentId: documentContext?.documentId,
-      };
+      let response: Response;
       
-      console.log("[Chatbot] Sending message:", { 
-        hasConversationId: !!conversationId,
-        hasDocumentId: !!documentContext?.documentId 
-      });
+      if (file) {
+        // Send with file attachment using FormData
+        const formData = new FormData();
+        formData.append("message", message || "");
+        formData.append("file", file);
+        if (conversationId) {
+          formData.append("conversationId", conversationId);
+        }
+        if (fileDocumentId) {
+          formData.append("documentId", fileDocumentId);
+        } else if (documentContext?.documentId) {
+          formData.append("documentId", documentContext.documentId);
+        }
+        
+        console.log("[Chatbot] Sending message with file:", { 
+          hasConversationId: !!conversationId,
+          hasDocumentId: !!fileDocumentId || !!documentContext?.documentId,
+          fileName: file.name
+        });
 
-      const response = await fetch("/app/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+        response = await fetch("/app/api/chat", {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        // Send JSON without file
+        const requestBody = {
+          message,
+          conversationId: conversationId || undefined,
+          documentId: documentContext?.documentId,
+        };
+        
+        console.log("[Chatbot] Sending message:", { 
+          hasConversationId: !!conversationId,
+          hasDocumentId: !!documentContext?.documentId 
+        });
+
+        response = await fetch("/app/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
+      }
 
       console.log("[Chatbot] Response status:", response.status, response.statusText);
 
@@ -166,6 +196,38 @@ export function Chatbot({ documentContext }: ChatbotProps) {
     // Navigate will be handled by the button's onClick
   };
 
+  const handleDocumentUploaded = async (documentId: string, documentName: string) => {
+    // Update document context
+    if (onDocumentUploaded) {
+      onDocumentUploaded(documentId, documentName);
+    }
+    
+    // Create a new conversation for the uploaded document
+    try {
+      const response = await fetch("/app/api/chat/conversations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: documentId,
+          documentName: documentName,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.conversationId) {
+          setConversationId(data.conversationId);
+          // Load the conversation messages
+          await loadConversation(data.conversationId);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to create conversation for uploaded document:", error);
+    }
+  };
+
   const handleOpen = async () => {
     setIsOpen(true);
     setIsMinimized(false);
@@ -237,6 +299,7 @@ export function Chatbot({ documentContext }: ChatbotProps) {
         onSendMessage={handleSendMessage}
         onQuickAction={handleQuickAction}
         onStartDocumentAnalysis={handleStartDocumentAnalysis}
+        onDocumentUploaded={handleDocumentUploaded}
       />
     </>
   );

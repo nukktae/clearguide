@@ -26,6 +26,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
     
+    // Risks collection - API routes enforce userId filtering
+    match /risks/{riskId} {
+      allow read, write: if true;
+    }
+    
     // Calendar events collection - API routes enforce userId filtering
     match /calendarEvents/{eventId} {
       allow read, write: if true;

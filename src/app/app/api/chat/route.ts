@@ -91,19 +91,48 @@ export async function POST(request: NextRequest) {
     const userId = await requireAuth(request);
     console.log("[API Chat] User authenticated:", userId);
     
-    const body = await request.json();
-    const { message, conversationId, documentId } = body;
+    // Check if request has FormData (file attachment) or JSON
+    const contentType = request.headers.get("content-type") || "";
+    let message: string;
+    let conversationId: string | undefined;
+    let documentId: string | undefined;
+    let attachedFile: File | null = null;
+    
+    if (contentType.includes("multipart/form-data")) {
+      // Handle FormData with file attachment
+      const formData = await request.formData();
+      message = (formData.get("message") as string) || "";
+      conversationId = formData.get("conversationId") as string | undefined;
+      documentId = formData.get("documentId") as string | undefined;
+      attachedFile = formData.get("file") as File | null;
+      
+      console.log("[API Chat] Received FormData:", {
+        hasMessage: !!message,
+        hasFile: !!attachedFile,
+        fileName: attachedFile?.name,
+        conversationId,
+        documentId,
+      });
+    } else {
+      // Handle JSON request
+      const body = await request.json();
+      message = body.message || "";
+      conversationId = body.conversationId;
+      documentId = body.documentId;
+    }
 
     // Validate required fields
-    if (!message || !message.trim()) {
+    if (!message?.trim() && !attachedFile) {
       return NextResponse.json(
-        { error: "메시지가 필요합니다." },
+        { error: "메시지 또는 파일이 필요합니다." },
         { status: 400 }
       );
     }
 
     // Get or create conversation
     let currentConversationId = conversationId;
+    let conversationDocumentId = documentId; // Use documentId from request if provided
+    
     if (!currentConversationId) {
       // Create new conversation
       let documentName: string | undefined;
@@ -114,7 +143,7 @@ export async function POST(request: NextRequest) {
       currentConversationId = await createConversation(userId, documentId, documentName);
       console.log("[API Chat] Created new conversation:", currentConversationId);
     } else {
-      // Verify conversation ownership
+      // Verify conversation ownership and get documentId from conversation if not provided
       const conversation = await getConversationById(currentConversationId, userId);
       if (!conversation) {
         return NextResponse.json(
@@ -122,10 +151,16 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+      // Use documentId from conversation if not provided in request
+      if (!conversationDocumentId && conversation.documentId) {
+        conversationDocumentId = conversation.documentId;
+        console.log("[API Chat] Using documentId from conversation:", conversationDocumentId);
+      }
     }
 
-    // Save user message
-    await addMessage(currentConversationId, "user", message);
+    // Save user message (include file indicator if present)
+    const messageToSave = message || (attachedFile ? `📎 ${attachedFile.name}` : "");
+    await addMessage(currentConversationId, "user", messageToSave);
     console.log("[API Chat] User message saved");
 
     // Get user privacy settings
@@ -136,28 +171,31 @@ export async function POST(request: NextRequest) {
       maskingMode: privacySettings.maskingMode,
     });
 
-    // Build context if documentId is provided
+    // Build context if documentId is provided (from request or conversation)
     let context: ChatContext | undefined;
     let useRAG = false;
     let ragContext: string | null = null;
     let ragChunks: any[] = [];
+    let document: any = null; // Declare document outside block for hybrid validation
 
-    if (documentId) {
+    if (conversationDocumentId) {
       console.log("[API Chat] Building document context...");
-      const [document, summary, checklist, risks] = await Promise.all([
-        getDocumentById(documentId, userId),
-        getSummaryByDocumentId(documentId, userId),
-        getChecklistByDocumentId(documentId, userId),
-        getRisksByDocumentId(documentId, userId),
+      const [documentData, summary, checklist, risks] = await Promise.all([
+        getDocumentById(conversationDocumentId, userId),
+        getSummaryByDocumentId(conversationDocumentId, userId),
+        getChecklistByDocumentId(conversationDocumentId, userId),
+        getRisksByDocumentId(conversationDocumentId, userId),
       ]);
 
+      document = documentData; // Assign to outer scope variable
+
       context = {
-        documentId,
+        documentId: conversationDocumentId,
         documentName: document?.fileName,
       };
 
       // Check if RAG is available and should be used
-      const ragAvailable = isSupabaseConfigured() && await hasChunks(documentId, userId);
+      const ragAvailable = isSupabaseConfigured() && await hasChunks(conversationDocumentId, userId);
       const shouldUseRAGForQuery = shouldUseRAG(message);
       useRAG = ragAvailable && shouldUseRAGForQuery;
 
@@ -171,7 +209,7 @@ export async function POST(request: NextRequest) {
         // Use RAG: Retrieve relevant chunks instead of full document
         console.log("[API Chat] Using RAG retrieval...");
         const adaptiveOptions = getAdaptiveOptions(message);
-        const ragResult = await buildRAGContext(message, documentId, userId, adaptiveOptions);
+        const ragResult = await buildRAGContext(message, conversationDocumentId, userId, adaptiveOptions);
         
         ragContext = ragResult.context;
         ragChunks = ragResult.chunks;
@@ -181,26 +219,62 @@ export async function POST(request: NextRequest) {
           chunksRetrieved: ragResult.chunks.length,
         });
 
-        // If no relevant content found, return refusal response
+        // If no relevant content found, fallback to summary/document info
         if (!ragResult.hasRelevantContent) {
-          console.log("[API Chat] No relevant content found, returning refusal");
-          const refusal = generateRefusalResponse();
+          console.log("[API Chat] No relevant content found in RAG, falling back to summary/document info");
           
-          // Save refusal response
-          const messageId = await addMessage(currentConversationId, "assistant", refusal.answer);
+          // Check if this is a general question that can be answered with summary
+          const isGeneralQuestion = /^(what|무엇|뭐|어떤|어떻게|how|about|about this|this about|이건|이것|이 문서)/i.test(message.trim());
           
-          return NextResponse.json({
-            success: true,
-            conversationId: currentConversationId,
-            message: {
-              id: messageId,
-              role: "assistant",
-              content: refusal.answer,
-              timestamp: new Date(),
-            },
-            ragUsed: true,
-            ragChunks: 0,
-          });
+          if (isGeneralQuestion && (summary || document?.fileName)) {
+            // Use summary/document info instead of refusal
+            console.log("[API Chat] General question detected, falling back to summary/document info");
+            useRAG = false; // Disable RAG, use summary instead
+            ragContext = null;
+            ragChunks = [];
+            
+            // Summary is already added to context below (line 269-271)
+            // Try to get OCR text as fallback if not already loaded
+            if (document?.fileName && !context.documentText) {
+              const { getOCRResultByDocumentId, getOCRResultByFileName } = await import("@/src/lib/firebase/firestore-ocr");
+              let ocrResult = await getOCRResultByDocumentId(conversationDocumentId, userId);
+              if (!ocrResult) {
+                ocrResult = await getOCRResultByFileName(document.fileName, userId);
+              }
+              if (ocrResult) {
+                let textToUse = ocrResult.text;
+                if (privacySettings.maskBeforeLLM) {
+                  const maskedResult = maskAll(textToUse, {
+                    mode: privacySettings.maskingMode,
+                    preserveFormat: true,
+                  });
+                  textToUse = maskedResult.maskedText;
+                }
+                context.documentText = textToUse;
+              }
+            }
+            // Continue with normal flow - summary will be added to context below
+          } else {
+            // For specific questions without relevant content, return refusal
+            console.log("[API Chat] Specific question without relevant content, returning refusal");
+            const refusal = generateRefusalResponse();
+            
+            // Save refusal response
+            const messageId = await addMessage(currentConversationId, "assistant", refusal.answer);
+            
+            return NextResponse.json({
+              success: true,
+              conversationId: currentConversationId,
+              message: {
+                id: messageId,
+                role: "assistant",
+                content: refusal.answer,
+                timestamp: new Date(),
+              },
+              ragUsed: true,
+              ragChunks: 0,
+            });
+          }
         }
       } else {
         // Fallback: Get full OCR text if RAG is not available
@@ -311,8 +385,36 @@ export async function POST(request: NextRequest) {
 
     const messages = buildChatMessages(systemPrompt, finalUserMessage, useRAG ? undefined : context, historyForAI);
 
+    // If file is attached, add image to the last user message
+    if (attachedFile) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.role === "user") {
+        // Convert file to base64
+        const arrayBuffer = await attachedFile.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64 = buffer.toString("base64");
+        const mimeType = attachedFile.type || "image/png";
+        const imageUrl = `data:${mimeType};base64,${base64}`;
+        
+        // Update last message to include image
+        messages[messages.length - 1] = {
+          role: "user",
+          content: [
+            { type: "text", text: typeof lastMessage.content === "string" ? lastMessage.content : "" },
+            { type: "image_url", image_url: { url: imageUrl } },
+          ],
+        } as any;
+        
+        console.log("[API Chat] Added image to message:", {
+          fileName: attachedFile.name,
+          fileType: attachedFile.type,
+          fileSize: attachedFile.size,
+        });
+      }
+    }
+
     // Get AI response
-    console.log("[API Chat] Calling OpenAI...", { useRAG, ragChunksCount: ragChunks.length });
+    console.log("[API Chat] Calling OpenAI...", { useRAG, ragChunksCount: ragChunks.length, hasImage: !!attachedFile });
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: messages as any,
@@ -350,14 +452,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Hybrid model validation: Validate LLM response against NER + regex + RE
-    // Only validate if we have a document context
-    if (documentId) {
+    // Skip validation if using vision API (attachedFile) - we don't have OCR text yet
+    // Only validate if we have a document context and no attached file
+    if (conversationDocumentId && !attachedFile) {
       try {
         console.log("[API Chat] Running hybrid validation (NER + regex + RE)...");
         
         // Get document again if not already available (should be available from context building above)
         // document is DocumentRecord | null from getDocumentById
-        const documentForValidation = document || await getDocumentById(documentId, userId);
+        const documentForValidation = document || await getDocumentById(conversationDocumentId, userId);
         
         // Type guard: DocumentRecord extends Document which has fileName property
         if (documentForValidation && 'fileName' in documentForValidation) {

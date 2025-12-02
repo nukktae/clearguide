@@ -35,6 +35,13 @@ export function ChatbotWrapper() {
     }
   }, [pathname]);
 
-  return <Chatbot documentContext={documentContext} />;
+  const handleDocumentUploaded = React.useCallback((documentId: string, documentName: string) => {
+    setDocumentContext({
+      documentId,
+      documentName,
+    });
+  }, []);
+
+  return <Chatbot documentContext={documentContext} onDocumentUploaded={handleDocumentUploaded} />;
 }
 

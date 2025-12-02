@@ -207,30 +207,66 @@ export function validateLLMResponse(
     }
   }
 
+  // Filter out disclaimers and fragments from obligations
+  const disclaimerKeywords = [
+    '행정서비스',
+    '법적인 의무나 권리가 발생하지 않습니다',
+    '통지문',
+    '제공하는 것으로',
+  ];
+  
+  const isDisclaimer = (text: string): boolean => {
+    const normalized = text.toLowerCase();
+    return disclaimerKeywords.some(keyword => normalized.includes(keyword.toLowerCase()));
+  };
+  
+  const isValidObligation = (text: string): boolean => {
+    // Skip if it's a disclaimer
+    if (isDisclaimer(text)) return false;
+    // Skip if it's too short (likely a fragment)
+    if (text.length < 10) return false;
+    // Skip if it's just "의무..." without context
+    if (text.trim().startsWith('의무') && text.length < 20) return false;
+    return true;
+  };
+
   // Check obligations
-  // 1. Check for missing obligations
-  for (const ruleObligation of ruleBasedData.obligations) {
+  // 1. Check for missing obligations (only for valid obligations)
+  const validRuleObligations = ruleBasedData.obligations.filter(ob => isValidObligation(ob.description));
+  
+  for (const ruleObligation of validRuleObligations) {
     const matchingLLMObligation = llmObligations.find(llmObligation =>
       obligationsMatch(llmObligation.description, ruleObligation.description)
     );
 
     if (!matchingLLMObligation) {
-      issues.push(
-        `Missing obligation: Rule-based extraction found obligation "${ruleObligation.description.substring(0, 50)}..." but LLM response does not mention it`
+      // Only flag if it's a significant obligation (not a minor one)
+      // Check if it contains important keywords
+      const importantKeywords = ['신고', '신청', '제출', '납부', '기한', '만료'];
+      const hasImportantKeywords = importantKeywords.some(kw => 
+        ruleObligation.description.includes(kw)
       );
+      
+      if (hasImportantKeywords) {
+        issues.push(
+          `Missing obligation: Rule-based extraction found obligation "${ruleObligation.description.substring(0, 50)}..." but LLM response does not mention it`
+        );
+      }
     }
   }
 
   // 2. Check for added obligations (less strict - LLM might paraphrase)
-  // Only flag if LLM adds many obligations not found by rules
+  // Only flag if LLM adds many obligations not found by rules AND they're significant
   const unmatchedLLMObligations = llmObligations.filter(
     llmObligation =>
-      !ruleBasedData.obligations.some(ruleObligation =>
+      isValidObligation(llmObligation.description) &&
+      !validRuleObligations.some(ruleObligation =>
         obligationsMatch(ruleObligation.description, llmObligation.description)
       )
   );
 
-  if (unmatchedLLMObligations.length > ruleBasedData.obligations.length) {
+  // Only flag if significantly more obligations than found by rules (allowing for paraphrasing)
+  if (unmatchedLLMObligations.length > Math.max(3, validRuleObligations.length * 1.5)) {
     issues.push(
       `Added obligations: LLM response mentions ${unmatchedLLMObligations.length} obligations not found by rule-based extraction`
     );
@@ -281,10 +317,24 @@ export function validateLLMResponse(
     }
   }
 
-  // Validation is strict: any issue makes it invalid
+  // Validation: Allow some minor issues but reject if too many or critical ones
+  // Filter out minor issues (disclaimers, fragments)
+  const criticalIssues = issues.filter(issue => {
+    // Skip issues about disclaimers
+    if (issue.includes('행정서비스') || issue.includes('법적인 의무나 권리가 발생하지 않습니다')) {
+      return false;
+    }
+    // Skip issues about fragments
+    if (issue.includes('의무...') && issue.length < 100) {
+      return false;
+    }
+    return true;
+  });
+  
+  // Only invalidate if there are critical issues
   return {
-    isValid: issues.length === 0,
-    issues,
+    isValid: criticalIssues.length === 0,
+    issues: criticalIssues,
   };
 }
 
@@ -353,18 +403,22 @@ function validateAgainstNER(llmText: string, nerEntities: NEREntity[]): string[]
       return datesMatch(llmDeadline.date, nerDate.text);
     });
 
-    if (!matchingLLMDeadline) {
-      issues.push(
-        `Missing NER deadline: NER found ${nerDate.text} but LLM response does not mention it`
-      );
-    } else {
-      // Check if dates match exactly
-      if (!datesMatch(matchingLLMDeadline.date, nerDate.text)) {
+    // Check if date appears in LLM text (even if not extracted as deadline)
+    const dateInText = llmText.includes(nerDate.text) || 
+      llmText.includes(nerDate.text.replace(/[.\-\/]/g, '')) ||
+      llmText.includes(nerDate.text.replace(/\./g, '-'));
+    
+    // Only flag if date is completely missing from response (not even mentioned)
+    if (!matchingLLMDeadline && !dateInText) {
+      // Check if it's a critical date (has year, month, day)
+      const hasFullDate = /\d{4}[.\-\/]\d{1,2}[.\-\/]\d{1,2}/.test(nerDate.text);
+      if (hasFullDate) {
         issues.push(
-          `Contradictory NER deadline: NER found ${nerDate.text} but LLM mentions ${matchingLLMDeadline.date}`
+          `Missing NER deadline: NER found ${nerDate.text} but LLM response does not mention it`
         );
       }
     }
+    // Don't flag date format differences as contradictions - allow paraphrasing
   }
 
   // Check NER MONEY entities against LLM penalties

@@ -126,16 +126,68 @@ export async function getRisksByDocumentId(
   userId: string
 ): Promise<{ id: string; risks: RiskAlert[]; createdAt: Date; updatedAt: Date } | null> {
   try {
-    const constraints = [
-      where("documentId", "==", documentId),
-      where("userId", "==", userId),
-      orderBy("createdAt", "desc"),
-    ];
+    // Try with orderBy first (requires composite index)
+    let risksDocs: Array<FirestoreRisks & { id: string }>;
     
-    const risksDocs = await getDocuments<FirestoreRisks & { id: string }>(
-      RISKS_COLLECTION_NAME,
-      constraints
-    );
+    try {
+      const constraints = [
+        where("documentId", "==", documentId),
+        where("userId", "==", userId),
+        orderBy("createdAt", "desc"),
+      ];
+      
+      risksDocs = await getDocuments<FirestoreRisks & { id: string }>(
+        RISKS_COLLECTION_NAME,
+        constraints
+      );
+    } catch (orderByError: any) {
+      // If orderBy fails (likely missing index), try without orderBy
+      if (orderByError?.message?.includes("index") || orderByError?.code === "failed-precondition") {
+        console.warn("[Firestore Risks] OrderBy failed (missing index), trying without orderBy");
+        const constraints = [
+          where("documentId", "==", documentId),
+          where("userId", "==", userId),
+        ];
+        
+        risksDocs = await getDocuments<FirestoreRisks & { id: string }>(
+          RISKS_COLLECTION_NAME,
+          constraints
+        );
+        
+        // Sort manually
+        risksDocs.sort((a, b) => {
+          let aTime: number;
+          if (a.createdAt) {
+            if (typeof a.createdAt.toDate === 'function') {
+              aTime = a.createdAt.toDate().getTime();
+            } else if (a.createdAt instanceof Date) {
+              aTime = a.createdAt.getTime();
+            } else {
+              aTime = new Date().getTime();
+            }
+          } else {
+            aTime = new Date().getTime();
+          }
+          
+          let bTime: number;
+          if (b.createdAt) {
+            if (typeof b.createdAt.toDate === 'function') {
+              bTime = b.createdAt.toDate().getTime();
+            } else if (b.createdAt instanceof Date) {
+              bTime = b.createdAt.getTime();
+            } else {
+              bTime = new Date().getTime();
+            }
+          } else {
+            bTime = new Date().getTime();
+          }
+          
+          return bTime - aTime; // Descending order
+        });
+      } else {
+        throw orderByError;
+      }
+    }
     
     if (risksDocs.length === 0) {
       return null;
