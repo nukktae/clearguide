@@ -27,13 +27,19 @@ export function middleware(request: NextRequest) {
   // For all other routes, let next-intl middleware handle locale routing first
   const response = intlMiddleware(request);
   
-  // Get the pathname after intl middleware processing
+  // Get the pathname from the original request (intl middleware handles routing internally)
   const processedPathname = request.nextUrl.pathname;
   
   // Extract locale from pathname (e.g., /en/app or /app)
   const localeMatch = processedPathname.match(/^\/(ko|en)(\/.*)?$/);
   const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
   const pathWithoutLocale = localeMatch ? (localeMatch[2] || "/") : processedPathname;
+  
+  // Handle root locale path (e.g., /en -> should show home page)
+  if (processedPathname === `/${locale}` || processedPathname === `/${locale}/`) {
+    // Let next-intl middleware handle this - it should route to the home page
+    return response;
+  }
 
   // Protected app routes that require authentication
   const protectedRoutes = ["/app", "/app/history", "/app/calendar", "/app/account"];
