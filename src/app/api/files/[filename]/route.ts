@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/src/lib/auth/api-auth";
 import { getDocumentByFilePath } from "@/src/lib/firebase/firestore-documents";
-import { supabase } from "@/src/lib/supabase/client";
+import { supabaseAdmin } from "@/src/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -39,23 +39,14 @@ export async function GET(
       );
     }
 
-    // Check if Supabase is configured
-    if (!supabase) {
-      console.error("[API Files] Supabase not configured");
-      return NextResponse.json(
-        { error: "Storage service not configured" },
-        { status: 500 }
-      );
-    }
-
-    // Download file from Supabase Storage
+    // Download file from Supabase Storage (private bucket)
     console.log("[API Files] Downloading from Supabase:", {
       bucket: SUPABASE_BUCKET_NAME,
       filename,
       userId,
     });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .storage
       .from(SUPABASE_BUCKET_NAME)
       .download(filename);

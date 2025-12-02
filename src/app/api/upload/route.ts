@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { requireAuth } from "@/src/lib/auth/api-auth";
 import { saveDocument } from "@/src/lib/firebase/firestore-documents";
-import { supabase } from "@/src/lib/supabase/client";
+import { supabaseAdmin } from "@/src/lib/supabase/server";
 import type { DocumentRecord } from "@/src/lib/parsing/types";
 import path from "path";
 
@@ -59,11 +59,11 @@ export async function POST(request: NextRequest) {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "application/msword",
     ];
-    const fileName = file.name.toLowerCase();
+    const fileLowerName = file.name.toLowerCase();
     const isValidByExtension = 
-      fileName.endsWith(".hwp") || 
-      fileName.endsWith(".doc") || 
-      fileName.endsWith(".docx");
+      fileLowerName.endsWith(".hwp") || 
+      fileLowerName.endsWith(".doc") || 
+      fileLowerName.endsWith(".docx");
     
     if (!allowedTypes.includes(file.type) && !isValidByExtension) {
       return NextResponse.json(
@@ -79,55 +79,54 @@ export async function POST(request: NextRequest) {
     // Get file extension from original filename or MIME type
     const originalName = file.name;
     const extension = path.extname(originalName) || getExtensionFromMimeType(file.type);
-    const fileName = `${documentId}${extension}`;
+    const storageFileName = `${documentId}${extension}`;
     
     console.log("[API Upload] Attempting to upload file to Supabase Storage...", {
       documentId,
-      fileName,
+      storageFileName,
       originalFileName: file.name,
       fileSize: file.size,
       bucket: SUPABASE_BUCKET_NAME,
     });
     
-    // Check if Supabase is configured
-    if (!supabase) {
-      console.error("[API Upload] Supabase not configured");
-      return NextResponse.json(
-        { error: "Storage service not configured" },
-        { status: 500 }
-      );
-    }
-    
-    // Convert File to ArrayBuffer for Supabase upload
+    // Convert File to Buffer for Supabase upload
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase
+    // Upload to Supabase Storage (private bucket)
+    console.log("[API Upload] Uploading to Supabase Storage...", {
+      bucket: SUPABASE_BUCKET_NAME,
+      storageFileName,
+      fileSize: buffer.length,
+    });
+    
+    const { error: uploadError } = await supabaseAdmin
       .storage
       .from(SUPABASE_BUCKET_NAME)
-      .upload(fileName, buffer, {
+      .upload(storageFileName, buffer, {
         contentType: file.type,
         upsert: false, // Don't overwrite existing files
       });
     
-    if (uploadError || !uploadData) {
+    if (uploadError) {
       console.error("[API Upload] Supabase upload error:", {
         documentId,
-        fileName,
-        error: uploadError?.message,
+        storageFileName,
+        error: uploadError.message,
         bucket: SUPABASE_BUCKET_NAME,
       });
-      throw new Error(`파일 저장 실패: ${uploadError?.message || "Supabase upload failed"}`);
+      return NextResponse.json(
+        { error: `파일 저장 실패: ${uploadError.message}` },
+        { status: 500 }
+      );
     }
     
     console.log("[API Upload] File uploaded successfully to Supabase:", {
-      fileName,
-      path: uploadData.path,
+      storageFileName,
       bucket: SUPABASE_BUCKET_NAME,
     });
     
-    const savedFileName = fileName;
+    const savedFileName = storageFileName;
 
     // Create document record (without OCR - OCR is separate endpoint)
     const documentRecord: DocumentRecord = {
