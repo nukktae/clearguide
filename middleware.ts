@@ -6,15 +6,21 @@ import { routing } from "./src/lib/i18n/routing";
 const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   
   // Public routes that don't need locale processing
+  // Extract pathname without query params for matching
+  const pathnameWithoutQuery = pathname.split('?')[0];
   const publicRoutes = ["/contact", "/privacy", "/terms"];
-  const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  const isPublicRoute = publicRoutes.some((route) => {
+    // Match exact route or route with sub-paths
+    return pathnameWithoutQuery === route || pathnameWithoutQuery.startsWith(`${route}/`);
+  });
   
-  // If it's a public route, skip locale processing but still check auth
+  // If it's a public route (including RSC requests with ?_rsc=), skip locale processing
   if (isPublicRoute) {
-    // Just pass through for public routes - they don't need locale routing
+    // Return next response to allow the route to be served directly
+    // This preserves query parameters like ?_rsc= for RSC requests
     return NextResponse.next();
   }
   
@@ -77,7 +83,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all pathnames except for static files and API routes
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    // Match all pathnames except for static files, API routes, and Next.js internals
+    // Exclude: api routes, _next (includes RSC), _vercel, and files with extensions
+    "/((?!api|_next|_vercel|.*\\..*|favicon.ico).*)",
   ],
 };
