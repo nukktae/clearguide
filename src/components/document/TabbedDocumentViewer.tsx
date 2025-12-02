@@ -43,6 +43,14 @@ export function TabbedDocumentViewer({
   const [ocrText, setOcrText] = React.useState<string | null>(null);
   const [isLoadingOcr, setIsLoadingOcr] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
+  const [imageBlobUrl, setImageBlobUrl] = React.useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = React.useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = React.useState<string | null>(null);
+  const [isLoadingPdf, setIsLoadingPdf] = React.useState(false);
+  
+  // Use refs to track blob URLs for cleanup
+  const imageBlobUrlRef = React.useRef<string | null>(null);
+  const pdfBlobUrlRef = React.useRef<string | null>(null);
   
   const isPDF = document.fileType === "application/pdf";
   const isImage = document.fileType?.startsWith("image/") ?? false;
@@ -78,6 +86,110 @@ export function TabbedDocumentViewer({
   };
   
   const fileUrl = getFileUrl();
+
+  // Fetch file as blob with authentication when fileUrl changes
+  React.useEffect(() => {
+    if (!fileUrl || (!isImage && !isPDF)) {
+      return;
+    }
+
+    let blobUrlToCleanup: string | null = null;
+    let isMounted = true;
+
+    // Clean up previous blob URLs before loading new ones
+    if (imageBlobUrlRef.current) {
+      URL.revokeObjectURL(imageBlobUrlRef.current);
+      imageBlobUrlRef.current = null;
+      setImageBlobUrl(null);
+    }
+    if (pdfBlobUrlRef.current) {
+      URL.revokeObjectURL(pdfBlobUrlRef.current);
+      pdfBlobUrlRef.current = null;
+      setPdfBlobUrl(null);
+    }
+
+    if (isImage) {
+      setIsLoadingImage(true);
+      setImageError(false);
+    }
+    if (isPDF) {
+      setIsLoadingPdf(true);
+    }
+
+    (async () => {
+      try {
+        const { getIdToken } = await import("@/src/lib/firebase/auth");
+        const token = await getIdToken();
+        if (!token) {
+          throw new Error("로그인이 필요합니다.");
+        }
+
+        const headers: HeadersInit = {
+          "Authorization": `Bearer ${token}`,
+        };
+
+        const response = await fetch(fileUrl, {
+          headers,
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load file: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        blobUrlToCleanup = blobUrl;
+        
+        if (!isMounted) {
+          URL.revokeObjectURL(blobUrl);
+          return;
+        }
+        
+        if (isImage) {
+          imageBlobUrlRef.current = blobUrl;
+          setImageBlobUrl(blobUrl);
+          setIsLoadingImage(false);
+        }
+        if (isPDF) {
+          pdfBlobUrlRef.current = blobUrl;
+          setPdfBlobUrl(blobUrl);
+          setIsLoadingPdf(false);
+        }
+      } catch (error) {
+        console.error("[TabbedDocumentViewer] Error loading file:", error);
+        if (!isMounted) return;
+        
+        if (isImage) {
+          setImageError(true);
+          setIsLoadingImage(false);
+        }
+        if (isPDF) {
+          setIsLoadingPdf(false);
+        }
+      }
+    })();
+
+    // Cleanup function - revoke blob URLs when component unmounts or fileUrl changes
+    return () => {
+      isMounted = false;
+      if (blobUrlToCleanup) {
+        URL.revokeObjectURL(blobUrlToCleanup);
+      }
+    };
+  }, [fileUrl, isImage, isPDF]);
+
+  // Cleanup blob URLs on unmount
+  React.useEffect(() => {
+    return () => {
+      if (imageBlobUrlRef.current) {
+        URL.revokeObjectURL(imageBlobUrlRef.current);
+      }
+      if (pdfBlobUrlRef.current) {
+        URL.revokeObjectURL(pdfBlobUrlRef.current);
+      }
+    };
+  }, []);
 
   // Debug logging
   React.useEffect(() => {
@@ -208,12 +320,23 @@ export function TabbedDocumentViewer({
             {fileUrl ? (
               <>
                 {isPDF ? (
+                  isLoadingPdf ? (
+                    <div className="text-center p-8">
+                      <div className="animate-spin h-8 w-8 border-2 border-[#2DB7A3] border-t-transparent rounded-full mx-auto mb-4" />
+                      <p className="text-sm text-gray-500">PDF 로딩 중...</p>
+                    </div>
+                  ) : pdfBlobUrl ? (
                   <PDFViewer
-                    fileUrl={fileUrl}
+                    fileUrl={pdfBlobUrl}
                     fileName={document.fileName}
                     parsedDocument={parsedDocument}
                     className="w-full h-full"
                   />
+                  ) : (
+                    <div className="text-center p-8">
+                      <p className="text-sm text-gray-500 mb-2">PDF를 불러올 수 없습니다</p>
+                    </div>
+                  )
                 ) : isImage ? (
                   imageError ? (
                     <div className="text-center p-8">
@@ -221,9 +344,14 @@ export function TabbedDocumentViewer({
                       <p className="text-sm text-gray-500 mb-2">이미지를 불러올 수 없습니다</p>
                       <p className="text-xs text-gray-400">파일 경로: {document.filePath || "없음"}</p>
                     </div>
-                  ) : (
+                  ) : isLoadingImage ? (
+                    <div className="text-center p-8">
+                      <div className="animate-spin h-8 w-8 border-2 border-[#2DB7A3] border-t-transparent rounded-full mx-auto mb-4" />
+                      <p className="text-sm text-gray-500">이미지 로딩 중...</p>
+                    </div>
+                  ) : imageBlobUrl ? (
                   <img
-                    src={fileUrl}
+                    src={imageBlobUrl}
                     alt={document.fileName}
                     className="max-w-full max-h-full object-contain rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
                       onError={() => {
@@ -235,6 +363,11 @@ export function TabbedDocumentViewer({
                         setImageError(false);
                       }}
                   />
+                  ) : (
+                    <div className="text-center p-8">
+                      <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-sm text-gray-500 mb-2">이미지를 불러올 수 없습니다</p>
+                    </div>
                   )
                 ) : isHWP ? (
                   <div className="text-center p-8">
