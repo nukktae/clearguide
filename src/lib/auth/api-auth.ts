@@ -3,22 +3,15 @@
  */
 
 import { NextRequest } from "next/server";
-import { getKakaoSession } from "./session";
 import { getUserFromToken } from "../firebase/admin";
 
 /**
- * Get user ID from request (supports Firebase Auth and Kakao)
+ * Get user ID from request (Firebase Auth only)
  * Returns null if not authenticated
  */
 export async function getUserIdFromRequest(
   request: NextRequest
 ): Promise<string | null> {
-  // Try Kakao session first
-  const kakaoSession = await getKakaoSession();
-  if (kakaoSession?.userId) {
-    return kakaoSession.userId;
-  }
-
   // Try Authorization header (for Postman/testing)
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {

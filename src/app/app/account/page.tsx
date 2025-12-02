@@ -25,6 +25,8 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 type Section = "basic" | "preferences" | "notifications" | "security" | "documents" | "danger";
 
@@ -33,6 +35,7 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [activeSection, setActiveSection] = React.useState<Section>("basic");
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
 
   // User state
@@ -55,39 +58,37 @@ export default function AccountPage() {
   // Scroll state hooks - must be before conditional return
   const [isScrolled, setIsScrolled] = React.useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
+  
+  // Mobile menu state - must be before conditional return
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
+    // Wait for auth to finish loading before trying to fetch profile
+    if (authLoading) return;
+    
+    if (!user) {
+      router.push("/login?redirect=/app/account");
+      return;
+    }
+
     const loadProfile = async () => {
-      const authCookie = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("clearguide_auth="));
-
-      const cookieValue = authCookie?.split("=")[1];
-      const localStorageAuth = localStorage.getItem("clearguide_auth");
-      
-      // Check if authenticated (cookie has token OR localStorage has "true")
-      const isAuth =
-        (cookieValue && cookieValue.length >= 100) || // Firebase token
-        cookieValue === "true" || // Legacy auth
-        localStorageAuth === "true"; // localStorage auth
-
-      if (!isAuth) {
-        router.push("/login?redirect=/app/account");
-        return;
-      }
-
       try {
-        // Get token from cookie to send in Authorization header
-        const token = cookieValue && cookieValue.length >= 100 ? cookieValue : null;
+        // Get auth token directly from Firebase Auth
+        const token = await getIdToken();
+        if (!token) {
+          console.warn("[Account Page] No auth token available, redirecting to login");
+          router.push("/login?redirect=/app/account");
+          return;
+        }
         
         // Load profile data
-        const headers: HeadersInit = {};
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
+        const headers: HeadersInit = {
+          "Authorization": `Bearer ${token}`,
+        };
         
         const response = await fetch("/app/api/profile", {
           headers,
+          credentials: "include",
         });
         
         if (response.ok) {
@@ -197,7 +198,7 @@ export default function AccountPage() {
     };
 
     loadProfile();
-  }, [router]);
+  }, [authLoading, user, router]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -220,12 +221,21 @@ export default function AccountPage() {
   };
 
   const handleSaveName = async (name: string) => {
+    const token = await getIdToken();
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const headers: HeadersInit = {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
     const response = await fetch("/app/api/profile", {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ displayName: name }),
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -249,12 +259,23 @@ export default function AccountPage() {
   };
 
   const handleUploadPhoto = async (file: File) => {
+    const token = await getIdToken();
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const headers: HeadersInit = {
+      "Authorization": `Bearer ${token}`,
+    };
+
     const formData = new FormData();
     formData.append("file", file);
 
     const response = await fetch("/app/api/profile/photo", {
       method: "POST",
+      headers,
       body: formData,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -267,12 +288,21 @@ export default function AccountPage() {
   };
 
   const handleDeletePhoto = async () => {
+    const token = await getIdToken();
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    const headers: HeadersInit = {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
     const response = await fetch("/app/api/profile", {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ photoURL: null }),
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -319,8 +349,6 @@ export default function AccountPage() {
     };
     return t(descriptionKeys[activeSection]);
   };
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-8rem)] max-w-[1260px] mx-auto">

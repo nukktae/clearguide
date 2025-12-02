@@ -102,38 +102,63 @@ export function TabbedDocumentViewer({
       setIsLoadingOcr(true);
       console.log("[TabbedDocumentViewer] Fetching OCR text for document:", document.id);
       
-      fetch(`/app/api/ocr?documentId=${document.id}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log("[TabbedDocumentViewer] OCR fetch response:", {
-            success: data.success,
-            hasOcrResult: !!data.ocrResult,
-            textLength: data.ocrResult?.text?.length || 0,
-          });
-          
-          if (data.success && data.ocrResult?.text) {
-            setOcrText(data.ocrResult.text);
-          } else {
-            // Fallback: try using document.rawText if available
-            if (document.rawText) {
-              setOcrText(document.rawText);
-            } else {
-              setOcrText(null);
-            }
+      // Get auth token and fetch OCR
+      (async () => {
+        try {
+          const { getIdToken } = await import("@/src/lib/firebase/auth");
+          const token = await getIdToken();
+          if (!token) {
+            throw new Error("로그인이 필요합니다.");
           }
-        })
-        .catch(err => {
-          console.error("[TabbedDocumentViewer] Error fetching OCR:", err);
+
+          const headers: HeadersInit = {
+            "Authorization": `Bearer ${token}`,
+          };
+
+          fetch(`/app/api/ocr?documentId=${document.id}`, {
+            headers,
+            credentials: "include",
+          })
+            .then(res => res.json())
+            .then(data => {
+              console.log("[TabbedDocumentViewer] OCR fetch response:", {
+                success: data.success,
+                hasOcrResult: !!data.ocrResult,
+                textLength: data.ocrResult?.text?.length || 0,
+              });
+              
+              if (data.success && data.ocrResult?.text) {
+                setOcrText(data.ocrResult.text);
+              } else {
+                // Fallback: try using document.rawText if available
+                if (document.rawText) {
+                  setOcrText(document.rawText);
+                } else {
+                  setOcrText(null);
+                }
+              }
+            })
+            .catch(err => {
+              console.error("[TabbedDocumentViewer] Error fetching OCR:", err);
+              // Fallback to document.rawText if available
+              if (document.rawText) {
+                setOcrText(document.rawText);
+              } else {
+                setOcrText(null);
+              }
+            })
+            .finally(() => {
+              setIsLoadingOcr(false);
+            });
+        } catch (err) {
+          console.error("[TabbedDocumentViewer] Error getting auth token:", err);
+          setIsLoadingOcr(false);
           // Fallback to document.rawText if available
           if (document.rawText) {
             setOcrText(document.rawText);
-          } else {
-            setOcrText(null);
           }
-        })
-        .finally(() => {
-          setIsLoadingOcr(false);
-        });
+        }
+      })();
     }
   }, [activeTab, document.id, document.rawText, ocrText, isLoadingOcr]);
 

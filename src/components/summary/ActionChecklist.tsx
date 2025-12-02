@@ -9,9 +9,10 @@ import { Tag } from "@/src/components/common/Tag";
 import { ShimmerSkeleton } from "@/src/components/common/Skeleton";
 import { Spinner } from "@/src/components/common/Spinner";
 import { generateKakaoMapUrl, extractLocationFromText, getUserLocation, LocationInfo } from "@/src/lib/utils/kakaoMap";
-import { formatDeadlineWithDays, parseDeadline, getDeadlineStatus, DeadlineStatus } from "@/src/lib/utils/calendar";
+import { formatDeadlineWithDays, parseDeadline, getDeadlineStatus, DeadlineStatus, deadlineToString } from "@/src/lib/utils/calendar";
 import { useRouter } from "next/navigation";
 import { generateCommunityCenterLinks } from "@/src/lib/utils/governmentLinks";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 export interface ActionChecklistProps {
   actions: ChecklistItem[];
@@ -20,6 +21,34 @@ export interface ActionChecklistProps {
   documentText?: string; // Raw text from document for location extraction
   documentId?: string; // Document ID for calendar events
   documentName?: string; // Document name for calendar events
+}
+
+/**
+ * Convert deadline to string, handling Firestore Timestamps
+ */
+function normalizeDeadline(deadline: any): string | undefined {
+  if (!deadline) return undefined;
+  if (typeof deadline === "string") return deadline;
+  
+  // Handle Firestore Timestamp objects (client SDK or Admin SDK)
+  if (deadline && typeof deadline === "object") {
+    // Client SDK Timestamp
+    if (typeof deadline.toDate === "function") {
+      return deadline.toDate().toISOString().split("T")[0];
+    }
+    // Admin SDK Timestamp or plain object with _seconds
+    if (deadline._seconds !== undefined) {
+      const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      return date.toISOString().split("T")[0];
+    }
+    // Already a Date
+    if (deadline instanceof Date) {
+      return deadline.toISOString().split("T")[0];
+    }
+  }
+  
+  // Use the utility function as fallback
+  return deadlineToString(deadline);
 }
 
 export function ActionChecklist({
@@ -36,16 +65,25 @@ export function ActionChecklist({
   const [userLocation, setUserLocation] = React.useState<{ lat: number; lng: number } | null>(null);
   const [isAddingToCalendar, setIsAddingToCalendar] = React.useState<string | null>(null);
 
+  // Normalize deadlines in actions to ensure they're always strings
+  const normalizedActions = React.useMemo(() => {
+    if (!actions || actions.length === 0) return [];
+    return actions.map(action => ({
+      ...action,
+      deadline: action.deadline ? normalizeDeadline(action.deadline) : undefined,
+    }));
+  }, [actions]);
+
   // Debug logging
   React.useEffect(() => {
     console.log("[ActionChecklist] Props:", {
-      actionsCount: actions?.length || 0,
+      actionsCount: normalizedActions?.length || 0,
       isLoading,
       documentId,
       documentName,
-      actions: actions?.slice(0, 2), // Log first 2 actions
+      actions: normalizedActions?.slice(0, 2), // Log first 2 actions
     });
-  }, [actions, isLoading, documentId, documentName]);
+  }, [normalizedActions, isLoading, documentId, documentName]);
 
   // Extract location from document text on mount
   React.useEffect(() => {
@@ -90,14 +128,18 @@ export function ActionChecklist({
   const handleAddToCalendar = async (action: ChecklistItem) => {
     if (!action.deadline) return;
     
-    const deadlineDate = parseDeadline(action.deadline);
+    // Normalize deadline to string first
+    const normalizedDeadline = normalizeDeadline(action.deadline);
+    if (!normalizedDeadline) return;
+    
+    const deadlineDate = parseDeadline(normalizedDeadline);
     if (!deadlineDate) return;
 
     setIsAddingToCalendar(action.id);
 
     try {
       // Determine urgency based on deadline status
-      const deadlineStatus = getDeadlineStatus(action.deadline);
+      const deadlineStatus = getDeadlineStatus(normalizedDeadline);
       let urgency: "critical" | "high" | "medium" | "low" | "action" = "action";
       
       if (deadlineStatus === "overdue") {
@@ -108,14 +150,22 @@ export function ActionChecklist({
         urgency = "medium";
       }
 
-      // Format deadline as YYYY-MM-DD
-      const deadlineStr = action.deadline.split("T")[0];
+      // Format deadline as YYYY-MM-DD (already normalized)
+      const deadlineStr = normalizedDeadline;
+
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
 
       const response = await fetch("/app/api/calendar", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           title: action.title,
           description: action.description || undefined,
@@ -125,6 +175,7 @@ export function ActionChecklist({
           documentName: documentName,
           type: "action",
         }),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -204,7 +255,7 @@ export function ActionChecklist({
               </div>
             ))}
           </div>
-        ) : actions.length === 0 ? (
+        ) : normalizedActions.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-sm text-[#6D6D6D] dark:text-gray-400">
               이 문서에는 추출된 행동 항목이 없습니다.
@@ -212,7 +263,7 @@ export function ActionChecklist({
           </div>
         ) : (
           <div className="space-y-4">
-            {actions.map((action, index) => (
+            {normalizedActions.map((action, index) => (
               <div
                 key={action.id}
                 className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 hover:bg-[#F4F6F9] transition-colors"

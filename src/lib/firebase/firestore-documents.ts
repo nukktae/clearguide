@@ -18,8 +18,10 @@ import {
   updateDocument,
   deleteDocument,
   firestoreQuery,
+  getFirestoreTimestamp,
+  dateToFirestoreTimestamp,
 } from "./firestore";
-import type { DocumentRecord } from "@/src/lib/parsing/types";
+import type { DocumentRecord, ChecklistItem, RiskAlert } from "@/src/lib/parsing/types";
 
 const COLLECTION_NAME = "documents";
 
@@ -38,21 +40,21 @@ type FirestoreDocumentRecord = Omit<DocumentRecord, "uploadedAt"> & {
  */
 function documentToFirestore(doc: DocumentRecord & { userId: string }): any {
   const convertDate = (date: Date | string | Timestamp | undefined): Timestamp => {
-    if (!date) return Timestamp.now();
+    if (!date) return getFirestoreTimestamp() as Timestamp;
     if (date instanceof Timestamp) {
       return date;
     }
     if (date instanceof Date) {
-      return Timestamp.fromDate(date);
+      return dateToFirestoreTimestamp(date) as Timestamp;
     }
-    return Timestamp.fromDate(new Date(date));
+    return dateToFirestoreTimestamp(new Date(date)) as Timestamp;
   };
 
   return {
     ...doc,
     uploadedAt: convertDate(doc.uploadedAt),
     createdAt: convertDate((doc as any).createdAt || doc.uploadedAt),
-    updatedAt: convertDate((doc as any).updatedAt || Timestamp.now()),
+    updatedAt: convertDate((doc as any).updatedAt || getFirestoreTimestamp()),
   };
 }
 
@@ -78,12 +80,110 @@ function firestoreToDocument(data: any): DocumentRecord {
     return new Date();
   };
 
-  return {
+  // Convert deadline from Timestamp/Date to string (YYYY-MM-DD)
+  const convertDeadlineToString = (deadline: any): string | undefined => {
+    if (!deadline) return undefined;
+    
+    // Already a string
+    if (typeof deadline === "string") {
+      return deadline;
+    }
+    
+    // Handle Timestamp objects
+    if (deadline && typeof deadline === "object") {
+      // Client SDK Timestamp
+      if (typeof deadline.toDate === "function") {
+        const date = deadline.toDate();
+        return date.toISOString().split("T")[0];
+      }
+      // Admin SDK Timestamp or plain object with _seconds
+      if (deadline._seconds !== undefined) {
+        const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+        return date.toISOString().split("T")[0];
+      }
+      // Already a Date
+      if (deadline instanceof Date) {
+        return deadline.toISOString().split("T")[0];
+      }
+    }
+    
+    // Fallback: try to stringify
+    return String(deadline);
+  };
+
+  // Convert actions array to ensure IDs are strings and deadlines are converted
+  const convertActions = (actions: any[]): ChecklistItem[] => {
+    if (!Array.isArray(actions)) return [];
+    const baseTimestamp = Date.now();
+    return actions.map((action, index) => {
+      let actionId: string;
+      if (action.id && typeof action.id === "string") {
+        actionId = action.id;
+      } else if (action.id && typeof action.id === "object") {
+        actionId = `action-${baseTimestamp}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+        console.warn(`[Firestore Documents] Action ID was an object, generated new ID: ${actionId}`);
+      } else {
+        actionId = `action-${baseTimestamp}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
+      const converted: ChecklistItem = {
+        ...action,
+        id: actionId,
+      };
+      
+      if (action.deadline) {
+        converted.deadline = convertDeadlineToString(action.deadline);
+      }
+      
+      return converted;
+    });
+  };
+
+  // Convert risks array to ensure IDs are strings and deadlines are converted
+  const convertRisks = (risks: any[]): RiskAlert[] => {
+    if (!Array.isArray(risks)) return [];
+    const baseTimestamp = Date.now();
+    return risks.map((risk, index) => {
+      let riskId: string;
+      if (risk.id && typeof risk.id === "string") {
+        riskId = risk.id;
+      } else if (risk.id && typeof risk.id === "object") {
+        riskId = `risk-${baseTimestamp}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+        console.warn(`[Firestore Documents] Risk ID was an object, generated new ID: ${riskId}`);
+      } else {
+        riskId = `risk-${baseTimestamp}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
+      const converted: RiskAlert = {
+        ...risk,
+        id: riskId,
+      };
+      
+      if (risk.deadline) {
+        converted.deadline = convertDeadlineToString(risk.deadline);
+      }
+      
+      return converted;
+    });
+  };
+
+  const converted = {
     ...data,
     uploadedAt: convertTimestamp(data.uploadedAt).toISOString(),
     createdAt: data.createdAt ? convertTimestamp(data.createdAt).toISOString() : convertTimestamp(data.uploadedAt).toISOString(),
     updatedAt: data.updatedAt ? convertTimestamp(data.updatedAt).toISOString() : convertTimestamp(data.uploadedAt).toISOString(),
   } as DocumentRecord;
+
+  // Convert parsed data if it exists
+  if (converted.parsed) {
+    converted.parsed = {
+      ...converted.parsed,
+      actions: convertActions(converted.parsed.actions),
+      risks: convertRisks(converted.parsed.risks),
+    };
+  }
+
+  return converted;
 }
 
 /**
@@ -91,6 +191,7 @@ function firestoreToDocument(data: any): DocumentRecord {
  */
 export async function getAllUserDocuments(userId: string): Promise<DocumentRecord[]> {
   try {
+    console.log("[Firestore Documents] getAllUserDocuments called with userId:", userId);
     const constraints = [
       where("userId", "==", userId),
       orderBy("uploadedAt", "desc"),
@@ -101,7 +202,28 @@ export async function getAllUserDocuments(userId: string): Promise<DocumentRecor
       constraints
     );
     
-    return docs.map(firestoreToDocument);
+    console.log("[Firestore Documents] Found documents before filtering:", {
+      count: docs.length,
+      userIds: [...new Set(docs.map(d => d.userId))],
+      allMatchUserId: docs.every(d => d.userId === userId),
+    });
+    
+    // CRITICAL: Filter by userId as a safety measure in case query didn't work correctly
+    const filteredDocs = docs.filter(doc => {
+      const docUserId = doc.userId;
+      const matches = docUserId === userId;
+      if (!matches) {
+        console.warn(`[Firestore Documents] Document ${doc.id} has userId ${docUserId}, expected ${userId} - FILTERING OUT`);
+      }
+      return matches;
+    });
+    
+    console.log("[Firestore Documents] Documents after filtering:", {
+      count: filteredDocs.length,
+      filteredOut: docs.length - filteredDocs.length,
+    });
+    
+    return filteredDocs.map(firestoreToDocument);
   } catch (error) {
     console.error("[Firestore Documents] Error getting user documents:", error);
     throw error;
@@ -177,13 +299,33 @@ export async function saveDocument(
   userId: string
 ): Promise<DocumentRecord> {
   try {
+    console.log("[Firestore Documents] saveDocument called:", {
+      documentId: document.id,
+      userId,
+      fileName: document.fileName,
+    });
+    
     const docData = documentToFirestore({ ...document, userId });
+    
+    // Verify userId is set correctly
+    if (docData.userId !== userId) {
+      console.error("[Firestore Documents] ERROR: userId mismatch!", {
+        expected: userId,
+        actual: docData.userId,
+      });
+      throw new Error(`UserId mismatch: expected ${userId}, got ${docData.userId}`);
+    }
     
     // Pass the document ID so it's used as the Firestore document ID
     const docId = await createDocument<FirestoreDocumentRecord>(
       COLLECTION_NAME,
       { ...docData, id: document.id } as any
     );
+    
+    console.log("[Firestore Documents] Document saved successfully:", {
+      documentId: docId,
+      userId: docData.userId,
+    });
     
     return {
       ...document,
@@ -214,11 +356,10 @@ export async function updateDocumentById(
     
     const updateData: any = { ...updates };
     if (updateData.uploadedAt) {
-      updateData.uploadedAt = Timestamp.fromDate(
-        updateData.uploadedAt instanceof Date 
-          ? updateData.uploadedAt 
-          : new Date(updateData.uploadedAt)
-      );
+      const date = updateData.uploadedAt instanceof Date 
+        ? updateData.uploadedAt 
+        : new Date(updateData.uploadedAt);
+      updateData.uploadedAt = dateToFirestoreTimestamp(date) as Timestamp;
     }
     
     await updateDocument(COLLECTION_NAME, documentId, updateData);

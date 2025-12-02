@@ -60,20 +60,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if it's a Kakao session (Kakao users can't update Firebase Auth profile)
-    const { getKakaoSession } = await import("@/src/lib/auth/session");
-    const kakaoSession = await getKakaoSession();
-    
-    if (kakaoSession?.userId === userId) {
-      // For Kakao users, we can't update Firebase Auth photoURL
-      // Instead, we could store in Firestore or return the data URL for client-side storage
-      // For now, return error suggesting they use Firebase Auth
-      return NextResponse.json(
-        { error: "카카오 로그인 사용자는 프로필 사진 변경이 제한됩니다. 이메일 로그인을 사용해주세요." },
-        { status: 400 }
-      );
-    }
-
     // Firebase Auth user - get token
     const authHeader = request.headers.get("authorization");
     const authCookie = request.cookies.get("clearguide_auth");

@@ -13,6 +13,7 @@ import {
   createDocument,
   deleteDocument,
   firestoreQuery,
+  getFirestoreTimestamp,
 } from "./firestore";
 
 const OCR_COLLECTION_NAME = "ocr_results";
@@ -52,7 +53,7 @@ export async function saveOCRResult(
       fileType,
       fileName,
       documentId,
-      createdAt: Timestamp.now(),
+      createdAt: getFirestoreTimestamp() as Timestamp,
     };
     
     const ocrId = await createDocument<FirestoreOCRResult>(

@@ -8,34 +8,45 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log("[API Documents] ===== GET DOCUMENT BY ID REQUEST START =====");
   try {
     // Require authentication and get userId
     const userId = await requireAuth(request);
-    console.log("[API] Getting document, userId:", userId);
+    console.log("[API Documents] User authenticated:", userId);
     
     const { id } = await params;
-    console.log("[API] Document ID:", id);
+    console.log("[API Documents] Document ID:", id);
+    console.log("[API Documents] Request URL:", request.url);
     
     // Get document with ownership check
+    console.log("[API Documents] Calling getDocumentById...");
     const document = await getDocumentById(id, userId);
-    console.log("[API] Document found:", !!document);
+    console.log("[API Documents] getDocumentById returned:", {
+      found: !!document,
+      hasId: !!document?.id,
+      hasFileName: !!document?.fileName,
+      documentId: document?.id,
+    });
 
     if (!document) {
-      console.log("[API] Document not found or access denied");
+      console.log("[API Documents] Document not found or access denied");
+      console.log("[API Documents] ===== GET DOCUMENT BY ID - NOT FOUND =====");
       return NextResponse.json(
         { error: "문서를 찾을 수 없습니다." },
         { status: 404 }
       );
     }
 
+    console.log("[API Documents] ===== GET DOCUMENT BY ID SUCCESS =====");
     return NextResponse.json({
       success: true,
       document,
     });
   } catch (error) {
-    console.error("[API] Get document error:", error);
-    console.error("[API] Error stack:", error instanceof Error ? error.stack : "No stack");
-    console.error("[API] Error details:", {
+    console.error("[API Documents] ===== GET DOCUMENT BY ID ERROR =====");
+    console.error("[API Documents] Error:", error);
+    console.error("[API Documents] Error stack:", error instanceof Error ? error.stack : "No stack");
+    console.error("[API Documents] Error details:", {
       message: error instanceof Error ? error.message : String(error),
       name: error instanceof Error ? error.name : "Unknown",
     });
@@ -48,11 +59,22 @@ export async function GET(
       );
     }
     
+    // Handle Admin SDK initialization errors
+    if (error instanceof Error && error.message.includes("not initialized")) {
+      console.error("[API Documents] Admin SDK not initialized - check FIREBASE_SERVICE_ACCOUNT_KEY");
+      return NextResponse.json(
+        {
+          error: "서버 설정 오류가 발생했습니다. 관리자에게 문의하세요.",
+          details: "Firebase Admin SDK가 초기화되지 않았습니다.",
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       {
         error: "문서를 가져오는 중 오류가 발생했습니다.",
         details: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );

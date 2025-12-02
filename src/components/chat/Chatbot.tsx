@@ -6,6 +6,7 @@ import { FloatingChatButton } from "./FloatingChatButton";
 import { ChatDrawer } from "./ChatDrawer";
 import type { ChatMessage } from "./ChatMessages";
 import { QuickActionType } from "./QuickActions";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 interface ChatbotProps {
   documentContext?: {
@@ -32,7 +33,21 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
 
   const loadConversation = async (convId: string) => {
     try {
-      const response = await fetch(`/app/api/chat?conversationId=${convId}`);
+      // Get auth token
+      const token = await getIdToken();
+      if (!token) {
+        console.warn("[Chatbot] No auth token available");
+        return;
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch(`/app/api/chat?conversationId=${convId}`, {
+        headers,
+        credentials: "include",
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.messages) {
@@ -65,6 +80,16 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
     setIsLoading(true);
 
     try {
+      // Get auth token
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다. 페이지를 새로고침해주세요.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
       let response: Response;
       
       if (file) {
@@ -89,7 +114,9 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
 
         response = await fetch("/app/api/chat", {
           method: "POST",
+          headers,
           body: formData,
+          credentials: "include",
         });
       } else {
         // Send JSON without file
@@ -107,9 +134,11 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
         response = await fetch("/app/api/chat", {
           method: "POST",
           headers: {
+            ...headers,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(requestBody),
+          credentials: "include",
         });
       }
 
@@ -204,15 +233,26 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
     
     // Create a new conversation for the uploaded document
     try {
+      // Get auth token
+      const token = await getIdToken();
+      if (!token) {
+        console.warn("[Chatbot] No auth token available");
+        return;
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
       const response = await fetch("/app/api/chat/conversations", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           documentId: documentId,
           documentName: documentName,
         }),
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -235,15 +275,26 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
     // Create a new conversation if we don't have one and have document context
     if (!conversationId && documentContext) {
       try {
+        // Get auth token
+        const token = await getIdToken();
+        if (!token) {
+          console.warn("[Chatbot] No auth token available");
+          return;
+        }
+
+        const headers: HeadersInit = {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        };
+
         const response = await fetch("/app/api/chat/conversations", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify({
             documentId: documentContext.documentId,
             documentName: documentContext.documentName,
           }),
+          credentials: "include",
         });
 
         if (response.ok) {

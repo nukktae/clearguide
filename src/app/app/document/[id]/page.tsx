@@ -10,12 +10,52 @@ import { EligibilityChecker } from "@/src/components/summary/EligibilityChecker"
 import { Button } from "@/src/components/common/Button";
 import { Spinner } from "@/src/components/common/Spinner";
 import { Skeleton, ShimmerSkeleton } from "@/src/components/common/Skeleton";
-import { DocumentRecord, ParsedDocument } from "@/src/lib/parsing/types";
+import { DocumentRecord, ParsedDocument, ChecklistItem } from "@/src/lib/parsing/types";
 import { ArrowLeft } from "lucide-react";
 import { TabbedDocumentViewer } from "@/src/components/document/TabbedDocumentViewer";
 import { CollapsibleMetadata } from "@/src/components/document/CollapsibleMetadata";
 import { SeverityRibbon } from "@/src/components/document/SeverityRibbon";
 import { FileText as FileTextIcon } from "lucide-react";
+import { getIdToken } from "@/src/lib/firebase/auth";
+
+/**
+ * Normalize deadline from Firestore Timestamp to string (YYYY-MM-DD)
+ * Handles both client SDK Timestamps and serialized Timestamp objects
+ */
+function normalizeDeadline(deadline: any): string | undefined {
+  if (!deadline) return undefined;
+  if (typeof deadline === "string") return deadline;
+  
+  // Handle Firestore Timestamp objects (client SDK or Admin SDK)
+  if (deadline && typeof deadline === "object") {
+    // Client SDK Timestamp
+    if (typeof deadline.toDate === "function") {
+      return deadline.toDate().toISOString().split("T")[0];
+    }
+    // Admin SDK Timestamp or plain object with _seconds (from JSON serialization)
+    if (deadline._seconds !== undefined) {
+      const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      return date.toISOString().split("T")[0];
+    }
+    // Already a Date
+    if (deadline instanceof Date) {
+      return deadline.toISOString().split("T")[0];
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Normalize actions array, ensuring deadlines are strings
+ */
+function normalizeActions(actions: any[]): ChecklistItem[] {
+  if (!Array.isArray(actions)) return [];
+  return actions.map((action) => ({
+    ...action,
+    deadline: normalizeDeadline(action.deadline),
+  }));
+}
 
 export default function DocumentDetailPage() {
   const params = useParams();
@@ -36,8 +76,21 @@ export default function DocumentDetailPage() {
     try {
       setIsLoading(true);
 
+      // Get auth token
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다. 페이지를 새로고침해주세요.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
       console.log("[Document Page] Fetching document from API...");
-      const response = await fetch(`/app/api/documents/${id}`);
+      const response = await fetch(`/app/api/documents/${id}`, {
+        headers,
+        credentials: "include",
+      });
       if (!response.ok) {
         const errorData = await response.json();
         console.error("[Document Page] Document fetch failed:", errorData);
@@ -60,13 +113,21 @@ export default function DocumentDetailPage() {
       
       let document = data.document;
       
+      // Normalize actions if they exist in parsed data
+      if (document.parsed?.actions) {
+        document.parsed.actions = normalizeActions(document.parsed.actions);
+      }
+      
       // If document doesn't have parsed data, try to fetch summary and checklist separately
       if (!document.parsed) {
         console.log("[Document Page] Document has no parsed data, fetching summary and checklist...");
         
         try {
           // Fetch summary
-          const summaryResponse = await fetch(`/app/api/summary?documentId=${id}`);
+          const summaryResponse = await fetch(`/app/api/summary?documentId=${id}`, {
+            headers,
+            credentials: "include",
+          });
           let summary = null;
           if (summaryResponse.ok) {
             const summaryData = await summaryResponse.json();
@@ -84,8 +145,11 @@ export default function DocumentDetailPage() {
           }
           
           // Fetch checklist
-          const checklistResponse = await fetch(`/app/api/checklist?documentId=${id}`);
-          let actions = [];
+          const checklistResponse = await fetch(`/app/api/checklist?documentId=${id}`, {
+            headers,
+            credentials: "include",
+          });
+          let actions: ChecklistItem[] = [];
           if (checklistResponse.ok) {
             const checklistData = await checklistResponse.json();
             console.log("[Document Page] Checklist API response:", {
@@ -94,7 +158,9 @@ export default function DocumentDetailPage() {
               checklistKeys: checklistData.checklist ? Object.keys(checklistData.checklist) : [],
               rawResponse: JSON.stringify(checklistData).substring(0, 200),
             });
-            actions = checklistData.checklist?.actions || checklistData.checklists?.[0]?.actions || [];
+            const rawActions: any[] = checklistData.checklist?.actions || checklistData.checklists?.[0]?.actions || [];
+            // Normalize actions to ensure deadlines are strings
+            actions = normalizeActions(rawActions);
             console.log("[Document Page] Checklist fetched:", {
               actionsCount: actions.length,
               actions: actions.slice(0, 2), // Log first 2 actions

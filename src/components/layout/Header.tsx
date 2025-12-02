@@ -15,10 +15,10 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const pathname = usePathname();
   const t = useTranslations();
-  const { user, kakaoUser } = useAuth();
+  const { user } = useAuth();
   
   // Check if user is authenticated
-  const isAuthenticated = !!user || !!kakaoUser;
+  const isAuthenticated = !!user;
 
   const navItems = [
     {

@@ -7,6 +7,10 @@ import { getAuth, Auth } from "firebase/auth";
 import { getAnalytics, Analytics } from "firebase/analytics";
 import { getFirestore, Firestore } from "firebase/firestore";
 
+// Track if Firebase config is valid
+let configValidated = false;
+let configIsValid = false;
+
 // Validate Firebase configuration
 function getFirebaseConfig() {
   const requiredEnvVars = {
@@ -24,6 +28,8 @@ function getFirebaseConfig() {
     .map(([key]) => key);
 
   if (missingVars.length > 0) {
+    configValidated = true;
+    configIsValid = false;
     if (typeof window !== "undefined") {
       console.error(
         `[Firebase] Missing required environment variables: ${missingVars.join(", ")}`
@@ -32,13 +38,49 @@ function getFirebaseConfig() {
     return null;
   }
 
+  // Validate format of critical values
+  const apiKey = requiredEnvVars.apiKey!;
+  const projectId = requiredEnvVars.projectId!;
+  const appId = requiredEnvVars.appId!;
+
+  // Basic format validation
+  if (!apiKey.startsWith("AIza") || apiKey.length < 30) {
+    configValidated = true;
+    configIsValid = false;
+    if (typeof window !== "undefined") {
+      console.error("[Firebase] Invalid API key format");
+    }
+    return null;
+  }
+
+  if (!projectId || projectId.length < 3) {
+    configValidated = true;
+    configIsValid = false;
+    if (typeof window !== "undefined") {
+      console.error("[Firebase] Invalid project ID");
+    }
+    return null;
+  }
+
+  if (!appId || !appId.includes(":")) {
+    configValidated = true;
+    configIsValid = false;
+    if (typeof window !== "undefined") {
+      console.error("[Firebase] Invalid app ID format");
+    }
+    return null;
+  }
+
+  configValidated = true;
+  configIsValid = true;
+
   return {
-    apiKey: requiredEnvVars.apiKey!,
+    apiKey,
     authDomain: requiredEnvVars.authDomain!,
-    projectId: requiredEnvVars.projectId!,
+    projectId,
     storageBucket: requiredEnvVars.storageBucket!,
     messagingSenderId: requiredEnvVars.messagingSenderId!,
-    appId: requiredEnvVars.appId!,
+    appId,
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
   };
 }
@@ -60,9 +102,10 @@ function initializeFirebase() {
     return;
   }
 
+  // Validate config first
   const firebaseConfig = getFirebaseConfig();
   
-  if (!firebaseConfig) {
+  if (!firebaseConfig || !configIsValid) {
     console.warn("[Firebase] Configuration is invalid or incomplete. Firebase features will be disabled.");
     return;
   }
@@ -75,60 +118,128 @@ function initializeFirebase() {
       app = getApps()[0];
     }
 
-    // Initialize Firebase Auth
-    authInstance = getAuth(app);
+    // Initialize Firebase Auth (this triggers Installations API call)
+    // Wrap in try-catch to handle Installations errors gracefully
+    try {
+      authInstance = getAuth(app);
+    } catch (authError: any) {
+      // If Auth initialization fails (e.g., Installations error), log but don't throw
+      console.error("[Firebase] Auth initialization failed:", authError);
+      if (authError?.code === "installations/request-failed" || authError?.message?.includes("Installations")) {
+        console.error(
+          "[Firebase] Installations error detected. Firebase Auth will be disabled.\n" +
+          "This usually means:\n" +
+          "1. Firebase environment variables are incorrect or missing\n" +
+          "2. Firebase project configuration is invalid\n" +
+          "3. The Firebase project doesn't allow client-side installations\n" +
+          "Please check your Firebase configuration in Vercel environment variables."
+        );
+      }
+      // Don't set authInstance - it will remain null
+      // This allows the app to continue without Firebase Auth
+    }
 
-    // Initialize Firestore
-    dbInstance = getFirestore(app);
+    // Initialize Firestore (only if app initialized successfully)
+    if (app) {
+      try {
+        dbInstance = getFirestore(app);
+      } catch (dbError) {
+        console.error("[Firebase] Firestore initialization failed:", dbError);
+        // Don't throw - allow app to continue
+      }
+    }
 
     // Initialize Analytics (handle ad blockers gracefully)
-    try {
-      analyticsInstance = getAnalytics(app);
-    } catch (error) {
-      // Analytics initialization failed (likely due to ad blocker)
-      // This is fine - analytics is optional and doesn't affect authentication
-      console.warn("[Firebase] Analytics initialization skipped (may be blocked by ad blocker)");
+    if (app) {
+      try {
+        analyticsInstance = getAnalytics(app);
+      } catch (error) {
+        // Analytics initialization failed (likely due to ad blocker)
+        // This is fine - analytics is optional and doesn't affect authentication
+        console.warn("[Firebase] Analytics initialization skipped (may be blocked by ad blocker)");
+      }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Firebase] Initialization error:", error);
     // Reset instances on error
     app = null;
     authInstance = null;
     dbInstance = null;
     analyticsInstance = null;
+    configIsValid = false;
   }
 }
 
-// Initialize Firebase on import (client side only)
-if (typeof window !== "undefined") {
-  initializeFirebase();
-}
+// DO NOT initialize Firebase on import - only initialize when explicitly accessed
+// This prevents the Installations error from happening during page load
 
 // Helper function to ensure Firebase is initialized and return auth instance
 function getAuthInstance(): Auth {
-  if (typeof window !== "undefined" && !authInstance) {
-    initializeFirebase();
-  }
-  if (!authInstance) {
-    // On server side, return a dummy object that will throw on use
-    // This prevents the Installations error by not initializing with invalid config
+  // Only initialize on client side
+  if (typeof window === "undefined") {
     throw new Error(
-      "Firebase Auth is not initialized. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+      "Firebase Auth cannot be used on the server side. Please use Firebase Admin SDK for server-side operations."
     );
   }
+
+  // Validate config before attempting initialization
+  if (!configValidated) {
+    getFirebaseConfig();
+  }
+
+  // Don't initialize if config is invalid
+  if (!configIsValid) {
+    throw new Error(
+      "Firebase Auth is not initialized due to invalid configuration. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+    );
+  }
+
+  // Initialize if not already initialized
+  if (!authInstance) {
+    initializeFirebase();
+  }
+
+  if (!authInstance) {
+    throw new Error(
+      "Firebase Auth initialization failed. Please check your Firebase configuration and ensure all environment variables are correct."
+    );
+  }
+
   return authInstance;
 }
 
 // Helper function to ensure Firebase is initialized and return db instance
 function getDbInstance(): Firestore {
-  if (typeof window !== "undefined" && !dbInstance) {
-    initializeFirebase();
-  }
-  if (!dbInstance) {
+  // Only initialize on client side
+  if (typeof window === "undefined") {
     throw new Error(
-      "Firestore is not initialized. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+      "Firestore cannot be used on the server side. Please use Firebase Admin SDK for server-side operations."
     );
   }
+
+  // Validate config before attempting initialization
+  if (!configValidated) {
+    getFirebaseConfig();
+  }
+
+  // Don't initialize if config is invalid
+  if (!configIsValid) {
+    throw new Error(
+      "Firestore is not initialized due to invalid configuration. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+    );
+  }
+
+  // Initialize if not already initialized
+  if (!dbInstance) {
+    initializeFirebase();
+  }
+
+  if (!dbInstance) {
+    throw new Error(
+      "Firestore initialization failed. Please check your Firebase configuration and ensure all environment variables are correct."
+    );
+  }
+
   return dbInstance;
 }
 

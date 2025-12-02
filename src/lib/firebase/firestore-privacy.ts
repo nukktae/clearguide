@@ -7,6 +7,7 @@ import {
   getDocument,
   createDocument,
   updateDocument,
+  getFirestoreTimestamp,
 } from './firestore';
 import type { PrivacySettings } from '@/src/lib/privacy/settings';
 import { DEFAULT_PRIVACY_SETTINGS } from '@/src/lib/privacy/settings';
@@ -61,11 +62,12 @@ export async function savePrivacySettings(
   settings: PrivacySettings
 ): Promise<void> {
   try {
+    const now = getFirestoreTimestamp();
     const data: Omit<FirestorePrivacySettings, 'id'> = {
       userId,
       ...settings,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     // Use userId as document ID

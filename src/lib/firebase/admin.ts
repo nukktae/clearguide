@@ -47,8 +47,16 @@ export async function getUserFromToken(idToken: string) {
     const payloadBuffer = Buffer.from(parts[1], 'base64');
     const payload = JSON.parse(payloadBuffer.toString('utf-8'));
     
+    const uid = payload.user_id || payload.sub;
+    console.log("[getUserFromToken] Decoded token:", {
+      uid,
+      email: payload.email,
+      hasUserId: !!payload.user_id,
+      hasSub: !!payload.sub,
+    });
+    
     return {
-      uid: payload.user_id || payload.sub,
+      uid,
       email: payload.email,
       email_verified: payload.email_verified,
     };

@@ -10,6 +10,8 @@ import {
   createDocument,
   deleteDocument,
   updateDocument,
+  getFirestoreTimestamp,
+  dateToFirestoreTimestamp,
 } from '@/src/lib/firebase/firestore';
 
 const RETENTION_COLLECTION = 'document_retention';
@@ -38,13 +40,14 @@ export async function saveWithTTL(
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + ttlInHours);
     
+    const now = getFirestoreTimestamp();
     const retentionData: Omit<RetentionRecord, 'id'> = {
       documentId,
       userId,
-      expiresAt: Timestamp.fromDate(expiresAt),
+      expiresAt: dateToFirestoreTimestamp(expiresAt) as Timestamp,
       autoDelete: false,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     // Use documentId as the Firestore document ID for easy lookup
@@ -72,13 +75,14 @@ export async function scheduleDeletion(
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + ttlInHours);
     
+    const now = getFirestoreTimestamp();
     const retentionData: Omit<RetentionRecord, 'id'> = {
       documentId,
       userId,
-      expiresAt: Timestamp.fromDate(expiresAt),
+      expiresAt: dateToFirestoreTimestamp(expiresAt) as Timestamp,
       autoDelete: true,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     // Use documentId as the Firestore document ID
@@ -218,12 +222,13 @@ export async function updateRetentionRecord(
       throw new Error('Retention record not found or access denied');
     }
     
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<RetentionRecord>(
       RETENTION_COLLECTION,
       documentId,
       {
         ...updates,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {
@@ -237,7 +242,7 @@ export async function updateRetentionRecord(
  */
 export async function getExpiredDocuments(userId: string): Promise<string[]> {
   try {
-    const now = Timestamp.now();
+    const now = getFirestoreTimestamp();
     const constraints = [
       where('userId', '==', userId),
       where('expiresAt', '<=', now),

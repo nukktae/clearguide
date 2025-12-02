@@ -1,69 +1,42 @@
-import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
-import { routing } from "./src/lib/i18n/routing";
-
-// Create next-intl middleware for locale routing
-const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl;
+  const { pathname } = request.nextUrl;
   
-  // Public routes that don't need locale processing
   // Extract pathname without query params for matching
   const pathnameWithoutQuery = pathname.split('?')[0];
-  const publicRoutes = ["/contact", "/privacy", "/terms"];
-  const isPublicRoute = publicRoutes.some((route) => {
-    // Match exact route or route with sub-paths
-    return pathnameWithoutQuery === route || pathnameWithoutQuery.startsWith(`${route}/`);
-  });
   
-  // If it's a public route (including RSC requests with ?_rsc=), skip locale processing
-  if (isPublicRoute) {
-    // Return next response to allow the route to be served directly
-    // This preserves query parameters like ?_rsc= for RSC requests
-    return NextResponse.next();
-  }
-  
-  // For all other routes, let next-intl middleware handle locale routing first
-  const response = intlMiddleware(request);
-  
-  // Get the pathname from the original request (intl middleware handles routing internally)
-  const processedPathname = request.nextUrl.pathname;
-  
-  // Extract locale from pathname (e.g., /en/app or /app)
-  const localeMatch = processedPathname.match(/^\/(ko|en)(\/.*)?$/);
-  const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
-  const pathWithoutLocale = localeMatch ? (localeMatch[2] || "/") : processedPathname;
-  
-  // Handle root locale path (e.g., /en -> should show home page)
-  if (processedPathname === `/${locale}` || processedPathname === `/${locale}/`) {
-    // Let next-intl middleware handle this - it should route to the home page
-    return response;
+  // Redirect any locale-prefixed URLs to clean URLs (e.g., /en/login -> /login)
+  const localeMatch = pathnameWithoutQuery.match(/^\/(ko|en)(\/.*)?$/);
+  if (localeMatch) {
+    const pathWithoutLocale = localeMatch[2] || "/";
+    const redirectUrl = new URL(pathWithoutLocale, request.url);
+    // Preserve query parameters
+    request.nextUrl.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(redirectUrl);
   }
 
   // Protected app routes that require authentication
   const protectedRoutes = ["/app", "/app/history", "/app/calendar", "/app/account"];
   const isProtectedRoute = protectedRoutes.some((route) =>
-    pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
+    pathnameWithoutQuery === route || pathnameWithoutQuery.startsWith(`${route}/`)
   );
 
   // Check if route is login/signup (allow access)
-  const isAuthRoute = pathWithoutLocale === "/login" || pathWithoutLocale === "/login/signup";
+  const isAuthRoute = pathnameWithoutQuery === "/login" || pathnameWithoutQuery.startsWith("/login/");
 
   // Handle authentication for protected routes
   if (isProtectedRoute) {
     const authCookie = request.cookies.get("clearguide_auth");
-    const kakaoSession = request.cookies.get("clearguide_session");
     
     const hasFirebaseAuth = authCookie && (authCookie.value === "true" || authCookie.value.length >= 100);
-    const hasKakaoAuth = kakaoSession !== undefined && kakaoSession !== null && kakaoSession.value && kakaoSession.value.length > 0;
-    const isAuthenticated = hasFirebaseAuth || hasKakaoAuth;
     
-    if (!isAuthenticated) {
-      // Redirect to login with return URL (preserve locale)
-      const loginPath = locale === routing.defaultLocale ? "/login" : `/${locale}/login`;
-      const loginUrl = new URL(loginPath, request.url);
-      loginUrl.searchParams.set("redirect", pathWithoutLocale);
+    if (!hasFirebaseAuth) {
+      // Redirect to login with return URL
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathnameWithoutQuery);
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -71,20 +44,16 @@ export function middleware(request: NextRequest) {
   // If already authenticated and trying to access login, redirect to app
   if (isAuthRoute) {
     const authCookie = request.cookies.get("clearguide_auth");
-    const kakaoSession = request.cookies.get("clearguide_session");
     
-    const isAuthenticated =
-      (authCookie && (authCookie.value === "true" || authCookie.value.length >= 100)) ||
-      kakaoSession !== undefined;
+    const isAuthenticated = authCookie && (authCookie.value === "true" || authCookie.value.length >= 100);
     
     if (isAuthenticated) {
-      const appPath = locale === routing.defaultLocale ? "/app" : `/${locale}/app`;
-      return NextResponse.redirect(new URL(appPath, request.url));
+      return NextResponse.redirect(new URL("/app", request.url));
     }
   }
 
-  // Return the response from intl middleware (with any auth redirects applied)
-  return response;
+  // Allow the request to proceed
+  return NextResponse.next();
 }
 
 export const config = {

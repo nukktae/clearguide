@@ -12,10 +12,76 @@ import {
   getDocuments,
   createDocument,
   updateDocument,
+  getFirestoreTimestamp,
 } from "./firestore";
 import type { ChecklistItem } from "@/src/lib/parsing/types";
 
 const CHECKLIST_COLLECTION_NAME = "checklists";
+
+/**
+ * Convert deadline from Timestamp/Date to string (YYYY-MM-DD)
+ */
+function convertDeadlineToString(deadline: any): string | undefined {
+  if (!deadline) return undefined;
+  
+  // Already a string
+  if (typeof deadline === "string") {
+    return deadline;
+  }
+  
+  // Handle Timestamp objects
+  if (deadline && typeof deadline === "object") {
+    // Client SDK Timestamp
+    if (typeof deadline.toDate === "function") {
+      const date = deadline.toDate();
+      return date.toISOString().split("T")[0];
+    }
+    // Admin SDK Timestamp or plain object with _seconds
+    if (deadline._seconds !== undefined) {
+      const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      return date.toISOString().split("T")[0];
+    }
+    // Already a Date
+    if (deadline instanceof Date) {
+      return deadline.toISOString().split("T")[0];
+    }
+  }
+  
+  // Fallback: try to stringify
+  return String(deadline);
+}
+
+/**
+ * Convert actions array, converting deadline fields from Timestamp to string
+ * Also ensures each action has a valid string ID
+ */
+function convertActionsDeadlines(actions: ChecklistItem[]): ChecklistItem[] {
+  return actions.map((action, index) => {
+    // Ensure ID is a string (not an object)
+    let actionId: string;
+    if (action.id && typeof action.id === "string") {
+      actionId = action.id;
+    } else if (action.id && typeof action.id === "object") {
+      // If ID is an object, generate a new one
+      actionId = `action-${Date.now()}-${index}`;
+      console.warn(`[Firestore Checklist] Action ID was an object, generated new ID: ${actionId}`);
+    } else {
+      // If ID is missing, generate one
+      actionId = `action-${Date.now()}-${index}`;
+    }
+    
+    const converted: ChecklistItem = {
+      ...action,
+      id: actionId,
+    };
+    
+    if (action.deadline) {
+      converted.deadline = convertDeadlineToString(action.deadline);
+    }
+    
+    return converted;
+  });
+}
 
 /**
  * Checklist stored in Firestore
@@ -37,12 +103,13 @@ export async function saveChecklist(
   actions: ChecklistItem[]
 ): Promise<string> {
   try {
+    const now = getFirestoreTimestamp();
     const checklistData: Omit<FirestoreChecklist, "id"> = {
       userId,
       documentId,
       actions,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     const checklistId = await createDocument<FirestoreChecklist>(
@@ -107,7 +174,7 @@ export async function getChecklistById(
     }
     
     return {
-      actions: checklistDoc.actions,
+      actions: convertActionsDeadlines(checklistDoc.actions),
       documentId: checklistDoc.documentId,
       createdAt,
       updatedAt,
@@ -231,7 +298,7 @@ export async function getChecklistByDocumentId(
     
     return {
       id: checklistDoc.id,
-      actions: checklistDoc.actions,
+      actions: convertActionsDeadlines(checklistDoc.actions),
       createdAt,
       updatedAt,
     };
@@ -293,7 +360,7 @@ export async function getAllUserChecklists(userId: string): Promise<Array<{
       return {
         id: doc.id,
         documentId: doc.documentId,
-        actions: doc.actions,
+        actions: convertActionsDeadlines(doc.actions),
         createdAt,
         updatedAt,
       };
@@ -319,12 +386,13 @@ export async function updateChecklist(
       throw new Error("Checklist not found or access denied");
     }
     
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<FirestoreChecklist>(
       CHECKLIST_COLLECTION_NAME,
       checklistId,
       {
         actions,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {

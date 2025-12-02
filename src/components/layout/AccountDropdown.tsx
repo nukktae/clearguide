@@ -12,11 +12,11 @@ export function AccountDropdown() {
   const router = useRouter();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const t = useTranslations();
-  const { signOut, user, kakaoUser } = useAuth();
+  const { signOut, user } = useAuth();
   
-  // Get display info from either Firebase or Kakao user
-  const displayName = user?.displayName || kakaoUser?.nickname || null;
-  const photoURL = user?.photoURL || kakaoUser?.profileImageUrl || null;
+  // Get display info from Firebase user
+  const displayName = user?.displayName || null;
+  const photoURL = user?.photoURL || null;
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

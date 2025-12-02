@@ -11,6 +11,8 @@ import { DocumentTable } from "@/src/components/storage/DocumentTable";
 import { DocumentGrid } from "@/src/components/storage/DocumentGrid";
 import { EmptyState } from "@/src/components/storage/EmptyState";
 import { getDeadlineStatus } from "@/src/lib/utils/calendar";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 export default function HistoryPage() {
   const t = useTranslations();
@@ -21,19 +23,51 @@ export default function HistoryPage() {
   const [activeFilter, setActiveFilter] = React.useState<FilterType>("all");
   const [viewMode, setViewMode] = React.useState<ViewMode>("list");
   const [sortOption, setSortOption] = React.useState<SortOption>("date-desc");
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
-    loadDocuments();
-  }, []);
+    // Wait for auth to finish loading before trying to fetch data
+    if (!authLoading) {
+      if (user) {
+        loadDocuments();
+      } else {
+        // User is not authenticated - redirect to login
+        router.push("/login?redirect=/app/history");
+      }
+    }
+  }, [authLoading, user]);
 
   const loadDocuments = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch("/app/api/documents");
+      // Get auth token from Firebase Auth
+      const token = await getIdToken();
+      if (!token) {
+        console.warn("[History] No auth token available, redirecting to login");
+        router.push("/login?redirect=/app/history");
+        return;
+      }
+
+      // Include Authorization header
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch("/app/api/documents", {
+        headers,
+        credentials: "include",
+      });
+      
       if (!response.ok) {
+        // Handle authentication errors
+        if (response.status === 401) {
+          router.push("/login?redirect=/app/history");
+          return;
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "문서 목록을 불러오는데 실패했습니다.");
       }
@@ -224,12 +258,21 @@ export default function HistoryPage() {
 
   const handleRename = async (id: string, newName: string) => {
     try {
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
       const response = await fetch(`/app/api/documents/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ fileName: newName }),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -259,8 +302,6 @@ export default function HistoryPage() {
       </div>
     );
   }
-
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   return (
     <div className="flex flex-col lg:flex-row h-full">

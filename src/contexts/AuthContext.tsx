@@ -1,13 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { onAuthStateChange, signOutUser, AuthUser } from "@/src/lib/firebase/auth";
-import { getKakaoSessionClient, clearKakaoSessionClient, KakaoUser } from "@/src/lib/auth/kakao";
+import { onAuthStateChange, signOutUser, AuthUser, getIdToken } from "@/src/lib/firebase/auth";
 import { useRouter } from "next/navigation";
 
 interface AuthContextValue {
   user: AuthUser | null;
-  kakaoUser: KakaoUser | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -16,32 +14,26 @@ const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [kakaoUser, setKakaoUser] = React.useState<KakaoUser | null>(null);
   const [loading, setLoading] = React.useState(true);
   const router = useRouter();
 
-  // Check for Kakao session on mount and when cookies change
-  React.useEffect(() => {
-    const checkKakaoSession = () => {
-      const kakaoSession = getKakaoSessionClient();
-      setKakaoUser(kakaoSession);
-    };
-
-    checkKakaoSession();
-
-    // Check periodically for Kakao session changes (e.g., after callback)
-    const interval = setInterval(checkKakaoSession, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   React.useEffect(() => {
     // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChange((authUser) => {
+    const unsubscribe = onAuthStateChange(async (authUser) => {
       setUser(authUser);
       
       // Update localStorage and cookie when auth state changes
       if (authUser) {
+        // Get fresh token and update cookie
+        try {
+          const idToken = await getIdToken();
+          if (idToken) {
+            document.cookie = `clearguide_auth=${idToken}; path=/; max-age=86400; SameSite=Lax`;
+          }
+        } catch (error) {
+          console.error("[AuthContext] Failed to get token:", error);
+        }
+        
         localStorage.setItem("clearguide_auth", "true");
         localStorage.setItem(
           "clearguide_user",
@@ -57,15 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("clearguide_auth");
         localStorage.removeItem("clearguide_user");
         document.cookie = "clearguide_auth=; path=/; max-age=0";
-        
-        // Check if we have Kakao session instead
-        const kakaoSession = getKakaoSessionClient();
-        if (kakaoSession) {
-          setKakaoUser(kakaoSession);
-          setLoading(false);
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     });
 
@@ -74,15 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      // Sign out from Firebase if logged in with Firebase
+      // Sign out from Firebase
       if (user) {
         await signOutUser();
-      }
-      
-      // Clear Kakao session if logged in with Kakao
-      if (kakaoUser) {
-        clearKakaoSessionClient();
-        setKakaoUser(null);
       }
       
       router.push("/login");
@@ -96,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        kakaoUser,
         loading,
         signOut: handleSignOut,
       }}

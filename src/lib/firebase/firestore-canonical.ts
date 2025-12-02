@@ -10,6 +10,8 @@ import {
   createDocument,
   updateDocument,
   firestoreQuery,
+  getFirestoreTimestamp,
+  dateToFirestoreTimestamp,
 } from "./firestore";
 import type { CanonicalDocumentData } from "@/src/lib/parsing/canonical-output";
 
@@ -30,10 +32,11 @@ type FirestoreCanonicalData = CanonicalDocumentData & {
 function canonicalToFirestore(
   data: CanonicalDocumentData & { userId: string }
 ): any {
+  const now = getFirestoreTimestamp();
   return {
     ...data,
-    createdAt: data.createdAt ? Timestamp.fromDate(new Date(data.createdAt)) : Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: data.createdAt ? dateToFirestoreTimestamp(new Date(data.createdAt)) as Timestamp : now as Timestamp,
+    updatedAt: now as Timestamp,
   };
 }
 
@@ -164,12 +167,13 @@ export async function updateCanonicalData(
       }
     }
 
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<FirestoreCanonicalData>(
       COLLECTION_NAME,
       canonicalId,
       {
         ...updates,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {

@@ -12,37 +12,86 @@ export interface CalendarEvent {
 }
 
 /**
- * Calculate days until deadline (D-70 format)
+ * Convert deadline to Date (handles string, Date, or Timestamp)
  */
-export function getDaysUntilDeadline(deadline: string): number | null {
+function deadlineToDate(deadline: string | Date | any): Date | null {
   try {
-    const deadlineDate = new Date(deadline);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    deadlineDate.setHours(0, 0, 0, 0);
-    
-    const diffTime = deadlineDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return diffDays;
+    if (deadline instanceof Date) {
+      return deadline;
+    }
+    if (typeof deadline === "string") {
+      return new Date(deadline);
+    }
+    // Handle Firestore Timestamp objects (client SDK or Admin SDK)
+    if (deadline && typeof deadline === "object") {
+      // Client SDK Timestamp
+      if (typeof deadline.toDate === "function") {
+        return deadline.toDate();
+      }
+      // Admin SDK Timestamp or plain object with _seconds
+      if (deadline._seconds !== undefined) {
+        return new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      }
+      // Try to parse as ISO string if it has a value property
+      if (deadline.value) {
+        return new Date(deadline.value);
+      }
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
 /**
+ * Convert deadline to string format (YYYY-MM-DD)
+ */
+export function deadlineToString(deadline: string | Date | any): string {
+  const date = deadlineToDate(deadline);
+  if (!date) {
+    return typeof deadline === "string" ? deadline : "";
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Calculate days until deadline (D-70 format)
+ */
+export function getDaysUntilDeadline(deadline: string | Date | any): number | null {
+  const deadlineDate = deadlineToDate(deadline);
+  if (!deadlineDate) return null;
+  
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  deadlineDate.setHours(0, 0, 0, 0);
+  
+  const diffTime = deadlineDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays;
+}
+
+/**
  * Format deadline with days remaining (e.g., "2025-01-31 (D-70)")
  */
-export function formatDeadlineWithDays(deadline: string): string {
+export function formatDeadlineWithDays(deadline: string | Date | any): string {
+  const deadlineStr = deadlineToString(deadline);
+  if (!deadlineStr) {
+    return typeof deadline === "string" ? deadline : "";
+  }
+  
   const days = getDaysUntilDeadline(deadline);
-  if (days === null) return deadline;
+  if (days === null) return deadlineStr;
   
   if (days < 0) {
-    return `${deadline} (기한 경과)`;
+    return `${deadlineStr} (기한 경과)`;
   } else if (days === 0) {
-    return `${deadline} (D-day)`;
+    return `${deadlineStr} (D-day)`;
   } else {
-    return `${deadline} (D-${days})`;
+    return `${deadlineStr} (D-${days})`;
   }
 }
 
@@ -51,7 +100,7 @@ export function formatDeadlineWithDays(deadline: string): string {
  */
 export type DeadlineStatus = "overdue" | "soon" | "okay";
 
-export function getDeadlineStatus(deadline: string): DeadlineStatus {
+export function getDeadlineStatus(deadline: string | Date | any): DeadlineStatus {
   const days = getDaysUntilDeadline(deadline);
   if (days === null) return "okay";
   

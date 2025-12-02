@@ -15,6 +15,16 @@ import {
   deleteDocument,
 } from "./firestore";
 
+// Helper to get the correct Timestamp based on environment
+function getTimestamp(): Date | Timestamp {
+  // On server side, use Date (will be converted to Admin Timestamp by createDocument)
+  // On client side, use client SDK Timestamp
+  if (typeof window === "undefined") {
+    return new Date();
+  }
+  return Timestamp.now();
+}
+
 const CONVERSATIONS_COLLECTION_NAME = "chatConversations";
 const MESSAGES_COLLECTION_NAME = "chatMessages";
 
@@ -67,23 +77,43 @@ export async function createConversation(
   documentName?: string
 ): Promise<string> {
   try {
-    const conversation: Omit<FirestoreChatConversation, "id"> = {
+    const now = getTimestamp();
+    // Build conversation object, only including defined fields
+    const conversation: any = {
       userId,
-      documentId,
-      documentName,
       messageCount: 0,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now,
+      updatedAt: now,
     };
+    
+    // Only add optional fields if they're defined
+    if (documentId !== undefined) {
+      conversation.documentId = documentId;
+    }
+    if (documentName !== undefined) {
+      conversation.documentName = documentName;
+    }
+    
+    console.log("[Firestore Chat] Creating conversation:", {
+      userId,
+      hasDocumentId: !!documentId,
+      hasDocumentName: !!documentName,
+    });
     
     const conversationId = await createDocument<FirestoreChatConversation>(
       CONVERSATIONS_COLLECTION_NAME,
-      conversation as any
+      conversation
     );
     
+    console.log("[Firestore Chat] Conversation created successfully:", conversationId);
     return conversationId;
   } catch (error) {
     console.error("[Firestore Chat] Error creating conversation:", error);
+    console.error("[Firestore Chat] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 }
@@ -230,12 +260,13 @@ export async function updateConversation(
       throw new Error("Conversation not found or access denied");
     }
     
+    const updateNow = getTimestamp();
     await updateDocument<FirestoreChatConversation>(
       CONVERSATIONS_COLLECTION_NAME,
       conversationId,
       {
         ...updates,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {
@@ -281,11 +312,12 @@ export async function addMessage(
   content: string
 ): Promise<string> {
   try {
+    const now = getTimestamp();
     const message: Omit<FirestoreChatMessage, "id"> = {
       conversationId,
       role,
       content,
-      timestamp: Timestamp.now(),
+      timestamp: now as Timestamp,
     };
     
     const messageId = await createDocument<FirestoreChatMessage>(
@@ -300,12 +332,13 @@ export async function addMessage(
     );
     
     if (conversation) {
+      const updateNow = getTimestamp();
       await updateDocument<FirestoreChatConversation>(
         CONVERSATIONS_COLLECTION_NAME,
         conversationId,
         {
           messageCount: (conversation.messageCount || 0) + 1,
-          updatedAt: Timestamp.now(),
+          updatedAt: updateNow as Timestamp,
           // Auto-generate title from first user message if not set
           title: !conversation.title && role === "user" 
             ? content.slice(0, 50) + (content.length > 50 ? "..." : "")

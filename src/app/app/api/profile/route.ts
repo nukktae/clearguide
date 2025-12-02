@@ -12,24 +12,6 @@ export async function GET(request: NextRequest) {
   try {
     const userId = await requireAuth(request);
     
-    // Check if it's a Kakao session
-    const { getKakaoSession } = await import("@/src/lib/auth/session");
-    const kakaoSession = await getKakaoSession();
-    
-    if (kakaoSession?.userId === userId) {
-      // Return Kakao user profile
-      return NextResponse.json({
-        success: true,
-        user: {
-          uid: kakaoSession.userId,
-          email: kakaoSession.email || null,
-          email_verified: false,
-          displayName: kakaoSession.nickname || null,
-          photoURL: kakaoSession.profileImageUrl || null,
-        },
-      });
-    }
-    
     // Firebase Auth user - get token
     const authHeader = request.headers.get("authorization");
     const authCookie = request.cookies.get("clearguide_auth");

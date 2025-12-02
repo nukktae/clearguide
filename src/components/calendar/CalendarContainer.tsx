@@ -6,6 +6,78 @@ import { CalendarGrid } from "./CalendarGrid";
 import { EventPopover } from "./EventPopover";
 import { UpcomingSidebar } from "./UpcomingSidebar";
 import { CalendarEventForm } from "./CalendarEventForm";
+import { deadlineToString } from "@/src/lib/utils/calendar";
+import { getIdToken } from "@/src/lib/firebase/auth";
+
+/**
+ * Normalize deadline to date string (YYYY-MM-DD), handling Firestore Timestamps
+ * Uses local timezone to match CalendarGrid and CalendarDay dateKey format
+ */
+function normalizeDeadlineToDateString(deadline: any): string | null {
+  if (!deadline) return null;
+  
+  // Helper to format date in local timezone (YYYY-MM-DD)
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  
+  // Already a string in YYYY-MM-DD format
+  if (typeof deadline === "string") {
+    // Extract YYYY-MM-DD part (in case it includes time)
+    const dateStr = deadline.split("T")[0];
+    // Validate it's in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr; // Return as-is to avoid timezone conversion issues
+    }
+    // If not in YYYY-MM-DD format, try parsing it
+    const date = new Date(deadline);
+    if (!isNaN(date.getTime())) {
+      return formatLocalDate(date);
+    }
+  }
+  
+  // Handle Firestore Timestamp objects (client SDK or Admin SDK)
+  if (deadline && typeof deadline === "object") {
+    // Client SDK Timestamp
+    if (typeof deadline.toDate === "function") {
+      const date = deadline.toDate();
+      if (!isNaN(date.getTime())) {
+        return formatLocalDate(date);
+      }
+    }
+    // Admin SDK Timestamp or plain object with _seconds (from JSON serialization)
+    if (deadline._seconds !== undefined) {
+      const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      if (!isNaN(date.getTime())) {
+        return formatLocalDate(date);
+      }
+    }
+    // Already a Date
+    if (deadline instanceof Date) {
+      if (!isNaN(deadline.getTime())) {
+        return formatLocalDate(deadline);
+      }
+    }
+  }
+  
+  // Use the utility function as fallback
+  try {
+    const dateStr = deadlineToString(deadline);
+    if (dateStr) {
+      // Convert to local timezone format
+      const date = new Date(dateStr + "T00:00:00");
+      if (!isNaN(date.getTime())) {
+        return formatLocalDate(date);
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 interface CalendarContainerProps {
   events: Array<{
@@ -55,7 +127,12 @@ export function CalendarContainer({
   const eventsByDate = React.useMemo(() => {
     const map = new Map<string, typeof events>();
     events.forEach((event) => {
-      const dateKey = new Date(event.deadline).toISOString().split("T")[0];
+      const dateKey = normalizeDeadlineToDateString(event.deadline);
+      if (!dateKey) {
+        // Skip events with invalid deadlines (null, relative text like "14일 이내", etc.)
+        // These should have been filtered out earlier, but we check here as a safety measure
+        return;
+      }
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }
@@ -65,7 +142,11 @@ export function CalendarContainer({
   }, [events]);
 
   const handleDayClick = React.useCallback((date: Date, event: React.MouseEvent<HTMLButtonElement>) => {
-    const dateKey = date.toISOString().split("T")[0];
+    // Use local timezone to match CalendarGrid's dateKey format
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateKey = `${year}-${month}-${day}`;
     const dayEvents = eventsByDate.get(dateKey) || [];
 
     // Double click to add event
@@ -107,12 +188,21 @@ export function CalendarContainer({
     severity?: "low" | "medium" | "high" | "critical";
   }) => {
     try {
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
       const response = await fetch("/app/api/calendar", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(eventData),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -150,12 +240,21 @@ export function CalendarContainer({
         throw new Error("이 이벤트는 수정할 수 없습니다.");
       }
 
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
       const response = await fetch(`/app/api/calendar/${eventId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(eventData),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -180,8 +279,19 @@ export function CalendarContainer({
     }
 
     try {
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
       const response = await fetch(`/app/api/calendar/${id}`, {
         method: "DELETE",
+        headers,
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -274,7 +384,10 @@ export function CalendarContainer({
             onViewDetail={onViewDetail}
             onEdit={(event) => {
               setEditingEvent(event);
-              setFormInitialDate(new Date(event.deadline));
+              const normalizedDeadline = normalizeDeadlineToDateString(event.deadline);
+              if (normalizedDeadline) {
+                setFormInitialDate(new Date(normalizedDeadline));
+              }
               setIsFormOpen(true);
               setSelectedDate(null);
             }}

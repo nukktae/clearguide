@@ -16,10 +16,10 @@ interface MobileMenuProps {
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const t = useTranslations();
   const pathname = usePathname();
-  const { user, kakaoUser } = useAuth();
+  const { user } = useAuth();
   
   // Check if user is authenticated
-  const isAuthenticated = !!user || !!kakaoUser;
+  const isAuthenticated = !!user;
 
   const baseNavItems = [
     {

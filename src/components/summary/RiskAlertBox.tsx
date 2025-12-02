@@ -7,6 +7,7 @@ import { RiskAlert } from "@/src/lib/parsing/types";
 import { Calendar, Plus } from "lucide-react";
 import { formatDeadlineWithDays, parseDeadline, getDeadlineStatus } from "@/src/lib/utils/calendar";
 import { useRouter } from "next/navigation";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 export interface RiskAlertBoxProps {
   risks: RiskAlert[];
@@ -59,11 +60,19 @@ export function RiskAlertBox({ risks, documentId, documentName }: RiskAlertBoxPr
       // Format deadline as YYYY-MM-DD
       const deadlineStr = risk.deadline.split("T")[0];
 
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
       const response = await fetch("/app/api/calendar", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           title: `${risk.title} - ${getTypeLabel(risk.type)}`,
           description: risk.message,
@@ -74,6 +83,7 @@ export function RiskAlertBox({ risks, documentId, documentName }: RiskAlertBoxPr
           type: "risk",
           severity: risk.severity,
         }),
+        credentials: "include",
       });
 
       if (!response.ok) {

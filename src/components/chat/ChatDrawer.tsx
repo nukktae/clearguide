@@ -7,6 +7,7 @@ import type { ChatMessage } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { QuickActionType } from "./QuickActions";
 import { cn } from "@/src/lib/utils/cn";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -152,13 +153,25 @@ export function ChatDrawer({
             setUploadStatus({ status: "uploading", fileName: file.name });
             
             try {
+              // Get auth token
+              const token = await getIdToken();
+              if (!token) {
+                throw new Error("로그인이 필요합니다. 페이지를 새로고침해주세요.");
+              }
+
+              const headers: HeadersInit = {
+                "Authorization": `Bearer ${token}`,
+              };
+
               // Upload file to get documentId (needed for context)
               const formData = new FormData();
               formData.append("file", file);
 
               const uploadResponse = await fetch("/app/api/upload", {
                 method: "POST",
+                headers,
                 body: formData,
+                credentials: "include",
               });
 
               if (!uploadResponse.ok) {

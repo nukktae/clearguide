@@ -79,7 +79,13 @@ export async function signInWithGoogle(): Promise<UserCredential> {
  * Get current user
  */
 export function getCurrentUser(): User | null {
-  return auth.currentUser;
+  try {
+    return auth.currentUser;
+  } catch (error) {
+    // If Firebase Auth is not initialized, return null
+    console.warn("[Firebase Auth] Failed to get current user:", error);
+    return null;
+  }
 }
 
 /**
@@ -102,9 +108,17 @@ export function convertFirebaseUser(user: User | null): AuthUser | null {
 export function onAuthStateChange(
   callback: (user: AuthUser | null) => void
 ): () => void {
-  return onAuthStateChanged(auth, (user) => {
-    callback(convertFirebaseUser(user));
-  });
+  try {
+    return onAuthStateChanged(auth, (user) => {
+      callback(convertFirebaseUser(user));
+    });
+  } catch (error: any) {
+    // If Firebase Auth is not initialized (e.g., due to invalid config or Installations error),
+    // call the callback with null and return a no-op unsubscribe function
+    console.warn("[Firebase Auth] Failed to initialize auth state listener:", error);
+    callback(null);
+    return () => {}; // Return no-op unsubscribe function
+  }
 }
 
 /**

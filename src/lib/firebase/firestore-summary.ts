@@ -12,6 +12,7 @@ import {
   getDocuments,
   createDocument,
   updateDocument,
+  getFirestoreTimestamp,
 } from "./firestore";
 import type { Summary } from "@/src/lib/parsing/types";
 
@@ -37,12 +38,13 @@ export async function saveSummary(
   summary: Summary
 ): Promise<string> {
   try {
+    const now = getFirestoreTimestamp();
     const summaryData: Omit<FirestoreSummary, "id"> = {
       userId,
       documentId,
       summary,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     const summaryId = await createDocument<FirestoreSummary>(
@@ -260,12 +262,13 @@ export async function updateSummary(
       throw new Error("Summary not found or access denied");
     }
     
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<FirestoreSummary>(
       SUMMARY_COLLECTION_NAME,
       summaryId,
       {
         summary,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {

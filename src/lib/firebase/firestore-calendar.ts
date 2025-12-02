@@ -13,6 +13,7 @@ import {
   createDocument,
   updateDocument,
   deleteDocument,
+  getFirestoreTimestamp,
 } from "./firestore";
 
 const CALENDAR_COLLECTION_NAME = "calendarEvents";
@@ -59,11 +60,12 @@ export async function saveCalendarEvent(
     console.log("[Firestore Calendar] Saving calendar event for user:", userId);
     console.log("[Firestore Calendar] Event data:", eventData);
     
+    const now = getFirestoreTimestamp();
     const event: Omit<FirestoreCalendarEvent, "id"> = {
       userId,
       ...eventData,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     console.log("[Firestore Calendar] Full event object:", event);
@@ -200,7 +202,27 @@ export async function getAllUserCalendarEvents(
     
     console.log("[Firestore Calendar] Found events:", events.length);
     
-    let filteredEvents = events.map((doc) => {
+    // CRITICAL: Filter by userId as a safety measure in case query didn't work correctly
+    const userIdFilteredEvents = events.filter(event => {
+      // Filter out events without userId field (old data)
+      if (!event.userId) {
+        console.warn(`[Firestore Calendar] Event ${event.id} missing userId field - FILTERING OUT`);
+        return false;
+      }
+      const eventUserId = event.userId;
+      const matches = eventUserId === userId;
+      if (!matches) {
+        console.warn(`[Firestore Calendar] Event ${event.id} has userId ${eventUserId}, expected ${userId} - FILTERING OUT`);
+      }
+      return matches;
+    });
+    
+    console.log("[Firestore Calendar] Events after userId filtering:", {
+      count: userIdFilteredEvents.length,
+      filteredOut: events.length - userIdFilteredEvents.length,
+    });
+    
+    let filteredEvents = userIdFilteredEvents.map((doc) => {
       // Convert Firestore Timestamp to Date
       let createdAt: Date;
       if (doc.createdAt) {
@@ -280,12 +302,13 @@ export async function updateCalendarEvent(
       throw new Error("Calendar event not found or access denied");
     }
     
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<FirestoreCalendarEvent>(
       CALENDAR_COLLECTION_NAME,
       eventId,
       {
         ...eventData,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {

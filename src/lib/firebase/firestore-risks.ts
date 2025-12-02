@@ -12,10 +12,76 @@ import {
   getDocuments,
   createDocument,
   updateDocument,
+  getFirestoreTimestamp,
 } from "./firestore";
 import type { RiskAlert } from "@/src/lib/parsing/types";
 
 const RISKS_COLLECTION_NAME = "risks";
+
+/**
+ * Convert deadline from Timestamp/Date to string (YYYY-MM-DD)
+ */
+function convertDeadlineToString(deadline: any): string | undefined {
+  if (!deadline) return undefined;
+  
+  // Already a string
+  if (typeof deadline === "string") {
+    return deadline;
+  }
+  
+  // Handle Timestamp objects
+  if (deadline && typeof deadline === "object") {
+    // Client SDK Timestamp
+    if (typeof deadline.toDate === "function") {
+      const date = deadline.toDate();
+      return date.toISOString().split("T")[0];
+    }
+    // Admin SDK Timestamp or plain object with _seconds
+    if (deadline._seconds !== undefined) {
+      const date = new Date(deadline._seconds * 1000 + (deadline._nanoseconds || 0) / 1000000);
+      return date.toISOString().split("T")[0];
+    }
+    // Already a Date
+    if (deadline instanceof Date) {
+      return deadline.toISOString().split("T")[0];
+    }
+  }
+  
+  // Fallback: try to stringify
+  return String(deadline);
+}
+
+/**
+ * Convert risks array, converting deadline fields from Timestamp to string
+ * Also ensures each risk has a valid string ID
+ */
+function convertRisksDeadlines(risks: RiskAlert[]): RiskAlert[] {
+  return risks.map((risk, index) => {
+    // Ensure ID is a string (not an object)
+    let riskId: string;
+    if (risk.id && typeof risk.id === "string") {
+      riskId = risk.id;
+    } else if (risk.id && typeof risk.id === "object") {
+      // If ID is an object, generate a new one
+      riskId = `risk-${Date.now()}-${index}`;
+      console.warn(`[Firestore Risks] Risk ID was an object, generated new ID: ${riskId}`);
+    } else {
+      // If ID is missing, generate one
+      riskId = `risk-${Date.now()}-${index}`;
+    }
+    
+    const converted: RiskAlert = {
+      ...risk,
+      id: riskId,
+    };
+    
+    if (risk.deadline) {
+      converted.deadline = convertDeadlineToString(risk.deadline);
+    }
+    
+    return converted;
+  });
+}
 
 /**
  * Risk alerts stored in Firestore
@@ -37,12 +103,13 @@ export async function saveRisks(
   risks: RiskAlert[]
 ): Promise<string> {
   try {
+    const now = getFirestoreTimestamp();
     const risksData: Omit<FirestoreRisks, "id"> = {
       userId,
       documentId,
       risks,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      createdAt: now as Timestamp,
+      updatedAt: now as Timestamp,
     };
     
     const risksId = await createDocument<FirestoreRisks>(
@@ -224,7 +291,7 @@ export async function getRisksByDocumentId(
     
     return {
       id: risksDoc.id,
-      risks: risksDoc.risks,
+      risks: convertRisksDeadlines(risksDoc.risks),
       createdAt,
       updatedAt,
     };
@@ -286,7 +353,7 @@ export async function getAllUserRisks(userId: string): Promise<Array<{
       return {
         id: doc.id,
         documentId: doc.documentId,
-        risks: doc.risks,
+        risks: convertRisksDeadlines(doc.risks),
         createdAt,
         updatedAt,
       };
@@ -312,12 +379,13 @@ export async function updateRisks(
       throw new Error("Risk alerts not found or access denied");
     }
     
+    const updateNow = getFirestoreTimestamp();
     await updateDocument<FirestoreRisks>(
       RISKS_COLLECTION_NAME,
       risksId,
       {
         risks,
-        updatedAt: Timestamp.now(),
+        updatedAt: updateNow as Timestamp,
       } as any
     );
   } catch (error) {

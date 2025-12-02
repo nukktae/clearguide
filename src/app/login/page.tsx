@@ -22,12 +22,6 @@ export default function LoginPage() {
 
   React.useEffect(() => {
     setMounted(true);
-    
-    // Check for error in URL params (from Kakao callback)
-    const errorParam = searchParams.get("error");
-    if (errorParam) {
-      setError(decodeURIComponent(errorParam));
-    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +45,9 @@ export default function LoginPage() {
       }));
       
       setIsLoading(false);
+      
+      // Wait a moment for cookie to be set and AuthContext to update
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Redirect to intended page or /app
       const redirectTo = searchParams.get("redirect") || "/app";
@@ -120,19 +117,6 @@ export default function LoginPage() {
       
       setError(errorMessage);
     }
-  };
-
-  const handleKakaoSignIn = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log("[Login Page] Kakao sign-in button clicked");
-    setError(null);
-    setIsLoading(true);
-    
-    // Use window.location.href for immediate redirect
-    console.log("[Login Page] Redirecting to /api/auth/kakao/login");
-    window.location.href = "/api/auth/kakao/login";
   };
 
   const [rememberMe, setRememberMe] = React.useState(false);
@@ -277,26 +261,6 @@ export default function LoginPage() {
               </svg>
               Google로 로그인
             </button>
-            <a
-              href="/api/auth/kakao/login"
-              onClick={(e) => {
-                console.log("[Login Page] Kakao link clicked");
-                if (isLoading) {
-                  e.preventDefault();
-                  return false;
-                }
-              }}
-              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm no-underline"
-            >
-              <Image
-                src="/images/logos/kakaotalk-logo.png"
-                alt="KakaoTalk"
-                width={20}
-                height={20}
-                className="h-5 w-5"
-              />
-              카카오로 로그인
-            </a>
           </div>
 
           {/* Registration Link */}

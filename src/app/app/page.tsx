@@ -17,6 +17,8 @@ import { RecentDocuments } from "@/src/components/app/RecentDocuments";
 import { AIAssistantWidget } from "@/src/components/app/AIAssistantWidget";
 import { UsefulLinksCard } from "@/src/components/app/UsefulLinksCard";
 import { DocumentRecord } from "@/src/lib/parsing/types";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { getIdToken } from "@/src/lib/firebase/auth";
 
 export default function AppPage() {
   console.log("[AppPage] ===== COMPONENT RENDERING =====");
@@ -33,18 +35,53 @@ export default function AppPage() {
   const [recentDocsError, setRecentDocsError] = React.useState<string | null>(null);
   const router = useRouter();
   const t = useTranslations("common");
+  const { user, loading: authLoading } = useAuth();
 
   React.useEffect(() => {
-    loadRecentDocuments();
-  }, []);
+    // Wait for auth to finish loading before trying to fetch documents
+    if (!authLoading) {
+      if (user) {
+        loadRecentDocuments();
+      } else {
+        // User is not authenticated - redirect to login
+        router.push("/login?redirect=/app");
+      }
+    }
+  }, [authLoading, user]);
 
   const loadRecentDocuments = async () => {
     try {
       setIsLoadingRecentDocs(true);
       setRecentDocsError(null);
 
-      const response = await fetch("/app/api/documents");
+      // Get auth token directly from Firebase Auth (more reliable than reading cookie)
+      const token = await getIdToken();
+
+      if (!token) {
+        console.warn("[AppPage] No auth token available, redirecting to login");
+        router.push("/login?redirect=/app");
+        return;
+      }
+
+      // Include Authorization header
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
+      const response = await fetch("/app/api/documents", {
+        headers,
+        credentials: "include", // Ensure cookies are sent
+      });
+      
       if (!response.ok) {
+        // Handle authentication errors
+        if (response.status === 401) {
+          // User is not authenticated - redirect to login
+          console.warn("[AppPage] Authentication failed, redirecting to login");
+          router.push("/login?redirect=/app");
+          return;
+        }
+        
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "문서 목록을 불러오는데 실패했습니다.");
       }
@@ -52,6 +89,7 @@ export default function AppPage() {
       const data = await response.json();
       const documents = data.documents || [];
       
+      // For new users, documents will be an empty array - this is expected and normal
       // Get most recent 5 documents
       if (documents.length > 0) {
         const sorted = documents.sort(
@@ -60,12 +98,15 @@ export default function AppPage() {
         );
         setRecentDocuments(sorted.slice(0, 5));
       } else {
-        // No documents - show empty state
+        // No documents - this is normal for new users
         setRecentDocuments([]);
       }
     } catch (err) {
-      console.error("Failed to load recent documents:", err);
-      setRecentDocsError(err instanceof Error ? err.message : "문서 목록을 불러오는데 실패했습니다.");
+      // Only log errors that aren't authentication-related (those redirect to login)
+      if (!(err instanceof Error && err.message.includes("redirect"))) {
+        console.error("[AppPage] Failed to load recent documents:", err);
+        setRecentDocsError(err instanceof Error ? err.message : "문서 목록을 불러오는데 실패했습니다.");
+      }
       setRecentDocuments([]);
     } finally {
       setIsLoadingRecentDocs(false);
@@ -90,12 +131,25 @@ export default function AppPage() {
       // Step 1: Upload file
       setCurrentStep(0);
       setUploadProgress(10);
+      
+      // Get auth token
+      const token = await getIdToken();
+      if (!token) {
+        throw new Error("로그인이 필요합니다. 페이지를 새로고침해주세요.");
+      }
+
+      const headers: HeadersInit = {
+        "Authorization": `Bearer ${token}`,
+      };
+
       const formData = new FormData();
       formData.append("file", selectedFile);
 
       const uploadResponse = await fetch("/app/api/upload", {
         method: "POST",
+        headers,
         body: formData,
+        credentials: "include",
       });
 
       if (!uploadResponse.ok) {
@@ -112,11 +166,13 @@ export default function AppPage() {
       const ocrResponse = await fetch("/app/api/ocr", {
         method: "POST",
         headers: {
+          ...headers,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId: documentId,
         }),
+        credentials: "include",
       });
 
       if (!ocrResponse.ok) {
@@ -133,12 +189,14 @@ export default function AppPage() {
       const summaryResponse = await fetch("/app/api/summary", {
         method: "POST",
         headers: {
+          ...headers,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId: documentId,
           ocrId: ocrId,
         }),
+        credentials: "include",
       });
 
       if (!summaryResponse.ok) {
@@ -153,12 +211,14 @@ export default function AppPage() {
       const checklistResponse = await fetch("/app/api/checklist", {
         method: "POST",
         headers: {
+          ...headers,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId: documentId,
           ocrId: ocrId,
         }),
+        credentials: "include",
       });
 
       if (!checklistResponse.ok) {
@@ -174,12 +234,14 @@ export default function AppPage() {
       const parseResponse = await fetch("/app/api/parse", {
         method: "POST",
         headers: {
+          ...headers,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           documentId: documentId,
           ocrId: ocrId,
         }),
+        credentials: "include",
       });
 
       let risks: any[] = [];
@@ -207,6 +269,7 @@ export default function AppPage() {
         const saveResponse = await fetch("/app/api/documents", {
           method: "POST",
           headers: {
+            ...headers,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -215,6 +278,7 @@ export default function AppPage() {
             },
             parsedDocument: parsedDocument,
           }),
+          credentials: "include",
         });
         
         if (saveResponse.ok) {
@@ -240,11 +304,13 @@ export default function AppPage() {
           const renameResponse = await fetch(`/app/api/documents/${documentId}`, {
             method: "PATCH",
             headers: {
+              ...headers,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
               fileName: newFileName,
             }),
+            credentials: "include",
           });
           
           if (renameResponse.ok) {

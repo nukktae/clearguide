@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
 import { cookies } from "next/headers";
@@ -12,12 +12,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "클리어가이드 | ClearGuide",
   description: "세금고지서, 과태료, 주민센터 안내문 등을 쉽게 이해하세요",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default async function RootLayout({

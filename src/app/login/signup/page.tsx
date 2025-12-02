@@ -58,6 +58,9 @@ export default function SignUpPage() {
       
       setIsLoading(false);
       
+      // Wait a moment for cookie to be set and AuthContext to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Redirect to app
       router.push("/app");
     } catch (err: any) {
@@ -122,18 +125,6 @@ export default function SignUpPage() {
     }
   };
 
-  const handleKakaoSignIn = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log("[Signup Page] Kakao sign-in button clicked");
-    setError(null);
-    setIsLoading(true);
-    
-    // Redirect to Kakao login endpoint using replace to avoid back button issues
-    console.log("[Signup Page] Redirecting to /api/auth/kakao/login");
-    window.location.replace("/api/auth/kakao/login");
-  };
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -277,26 +268,6 @@ export default function SignUpPage() {
               </svg>
               Google로 가입하기
             </button>
-            <a
-              href="/api/auth/kakao/login"
-              onClick={(e) => {
-                console.log("[Signup Page] Kakao link clicked");
-                if (isLoading) {
-                  e.preventDefault();
-                  return false;
-                }
-              }}
-              className="w-full h-12 flex items-center justify-center gap-3 rounded-lg bg-white border border-gray-200 text-sm font-medium text-[#1C2329] hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm no-underline"
-            >
-              <Image
-                src="/images/logos/kakaotalk-logo.png"
-                alt="KakaoTalk"
-                width={20}
-                height={20}
-                className="h-5 w-5"
-              />
-              카카오로 가입하기
-            </a>
           </div>
 
           {/* Back to Login */}
