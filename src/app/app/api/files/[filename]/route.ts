@@ -63,10 +63,13 @@ export async function GET(
     const contentType = contentTypeMap[ext || ""] || "application/octet-stream";
 
     // Return file with appropriate headers
+    // Encode filename for Content-Disposition header (handles Korean characters)
+    const encodedFileName = encodeURIComponent(document.fileName || filename);
+    
     return new NextResponse(fileBuffer, {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `inline; filename="${document.fileName || filename}"`,
+        "Content-Disposition": `inline; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
         "Cache-Control": "private, max-age=3600", // Changed to private since files are user-specific
       },
     });

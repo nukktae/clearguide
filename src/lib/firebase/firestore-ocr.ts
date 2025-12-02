@@ -27,6 +27,7 @@ type FirestoreOCRResult = {
   pageCount?: number;
   fileType: string;
   fileName: string;
+  documentId?: string; // Optional: link to document
   createdAt: Timestamp;
 };
 
@@ -39,7 +40,8 @@ export async function saveOCRResult(
   fileType: string,
   fileName: string,
   confidence?: number,
-  pageCount?: number
+  pageCount?: number,
+  documentId?: string
 ): Promise<string> {
   try {
     const ocrData: Omit<FirestoreOCRResult, "id"> = {
@@ -49,6 +51,7 @@ export async function saveOCRResult(
       pageCount,
       fileType,
       fileName,
+      documentId,
       createdAt: Timestamp.now(),
     };
     
@@ -94,6 +97,93 @@ export async function getOCRResultById(
   } catch (error) {
     console.error("[Firestore OCR] Error getting OCR result:", error);
     throw error;
+  }
+}
+
+/**
+ * Get OCR result by documentId (preferred method)
+ */
+export async function getOCRResultByDocumentId(
+  documentId: string,
+  userId: string
+): Promise<{ id: string; text: string; confidence?: number; pageCount?: number; createdAt: Date } | null> {
+  try {
+    console.log("[Firestore OCR] Getting OCR result by documentId:", { documentId, userId });
+    
+    const constraints = [
+      where("documentId", "==", documentId),
+      where("userId", "==", userId),
+    ];
+    
+    const ocrDocs = await getDocuments<FirestoreOCRResult & { id: string }>(
+      OCR_COLLECTION_NAME,
+      constraints
+    );
+    
+    if (ocrDocs.length === 0) {
+      console.log("[Firestore OCR] No OCR result found for documentId:", documentId);
+      return null;
+    }
+    
+    // Sort manually by createdAt (most recent first)
+    ocrDocs.sort((a, b) => {
+      let aTime: number;
+      if (a.createdAt) {
+        if (typeof a.createdAt.toDate === 'function') {
+          aTime = a.createdAt.toDate().getTime();
+        } else if (a.createdAt instanceof Date) {
+          aTime = a.createdAt.getTime();
+        } else {
+          aTime = new Date().getTime();
+        }
+      } else {
+        aTime = new Date().getTime();
+      }
+      
+      let bTime: number;
+      if (b.createdAt) {
+        if (typeof b.createdAt.toDate === 'function') {
+          bTime = b.createdAt.toDate().getTime();
+        } else if (b.createdAt instanceof Date) {
+          bTime = b.createdAt.getTime();
+        } else {
+          bTime = new Date().getTime();
+        }
+      } else {
+        bTime = new Date().getTime();
+      }
+      
+      return bTime - aTime;
+    });
+    
+    const ocrDoc = ocrDocs[0];
+    
+    // Convert Firestore Timestamp to Date
+    let createdAt: Date;
+    if (ocrDoc.createdAt) {
+      if (typeof ocrDoc.createdAt.toDate === 'function') {
+        createdAt = ocrDoc.createdAt.toDate();
+      } else if (ocrDoc.createdAt instanceof Date) {
+        createdAt = ocrDoc.createdAt;
+      } else {
+        createdAt = new Date();
+      }
+    } else {
+      createdAt = new Date();
+    }
+    
+    console.log("[Firestore OCR] OCR result found by documentId:", { id: ocrDoc.id, textLength: ocrDoc.text.length });
+    
+    return {
+      id: ocrDoc.id,
+      text: ocrDoc.text,
+      confidence: ocrDoc.confidence,
+      pageCount: ocrDoc.pageCount,
+      createdAt,
+    };
+  } catch (error) {
+    console.error("[Firestore OCR] Error getting OCR result by documentId:", error);
+    return null;
   }
 }
 

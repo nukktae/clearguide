@@ -61,9 +61,17 @@ export async function GET(request: NextRequest) {
         });
       }
       
-      console.log("[API OCR] Document found, fetching OCR by fileName:", document.fileName);
-      const { getOCRResultByFileName } = await import("@/src/lib/firebase/firestore-ocr");
-      const ocrResult = await getOCRResultByFileName(document.fileName, userId);
+      console.log("[API OCR] Document found, fetching OCR by documentId:", documentId);
+      const { getOCRResultByDocumentId, getOCRResultByFileName } = await import("@/src/lib/firebase/firestore-ocr");
+      
+      // Try to get OCR by documentId first (more reliable)
+      let ocrResult = await getOCRResultByDocumentId(documentId, userId);
+      
+      // Fallback to fileName if documentId doesn't work
+      if (!ocrResult) {
+        console.log("[API OCR] OCR not found by documentId, trying fileName:", document.fileName);
+        ocrResult = await getOCRResultByFileName(document.fileName, userId);
+      }
       
       if (!ocrResult) {
         console.log("[API OCR] OCR result not found for fileName");
@@ -272,7 +280,8 @@ export async function POST(request: NextRequest) {
       document.fileType,
       document.fileName,
       ocrResult.confidence,
-      ocrResult.pageCount
+      ocrResult.pageCount,
+      documentId // Save documentId for easier lookup
     );
     console.log("[API OCR] Masked OCR result saved:", {
       ocrId,
