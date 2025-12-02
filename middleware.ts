@@ -7,11 +7,27 @@ const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Extract locale from pathname (e.g., /en/contact or /contact)
-  const localeMatch = pathname.match(/^\/(ko|en)(\/.*)?$/);
+  
+  // Public routes that don't need locale processing
+  const publicRoutes = ["/contact", "/privacy", "/terms"];
+  const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  
+  // If it's a public route, skip locale processing but still check auth
+  if (isPublicRoute) {
+    // Just pass through for public routes - they don't need locale routing
+    return NextResponse.next();
+  }
+  
+  // For all other routes, let next-intl middleware handle locale routing first
+  const response = intlMiddleware(request);
+  
+  // Get the pathname after intl middleware processing
+  const processedPathname = request.nextUrl.pathname;
+  
+  // Extract locale from pathname (e.g., /en/app or /app)
+  const localeMatch = processedPathname.match(/^\/(ko|en)(\/.*)?$/);
   const locale = localeMatch ? localeMatch[1] : routing.defaultLocale;
-  const pathWithoutLocale = localeMatch ? (localeMatch[2] || "/") : pathname;
+  const pathWithoutLocale = localeMatch ? (localeMatch[2] || "/") : processedPathname;
 
   // Protected app routes that require authentication
   const protectedRoutes = ["/app", "/app/history", "/app/calendar", "/app/account"];
@@ -55,8 +71,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Let next-intl middleware handle locale routing
-  return intlMiddleware(request);
+  // Return the response from intl middleware (with any auth redirects applied)
+  return response;
 }
 
 export const config = {
