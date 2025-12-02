@@ -22,7 +22,7 @@ import { getIdToken } from "@/src/lib/firebase/auth";
 
 export default function AppPage() {
   console.log("[AppPage] ===== COMPONENT RENDERING =====");
-  console.log("[AppPage] File location: src/app/[locale]/app/page.tsx");
+  console.log("[AppPage] File location: src/app/app/page.tsx");
   const [file, setFile] = React.useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = React.useState<number>(0);
   const [isProcessing, setIsProcessing] = React.useState(false);

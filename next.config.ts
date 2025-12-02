@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
+  // Explicitly disable locale-based routing
+  // All routes should be without locale prefixes (e.g., /app not /ko/app)
+  experimental: {
+    // Ensure no locale routing is enabled
+  },
 };
 
 export default withNextIntl(nextConfig);

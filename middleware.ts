@@ -6,7 +6,8 @@ export function middleware(request: NextRequest) {
   // Extract pathname without query params for matching
   const pathnameWithoutQuery = pathname.split('?')[0];
   
-  // Redirect any locale-prefixed URLs to clean URLs (e.g., /en/login -> /login)
+  // CRITICAL: Redirect any locale-prefixed URLs to clean URLs (e.g., /ko/app -> /app, /en/login -> /login)
+  // This handles cases where Next.js or next-intl might still generate locale-prefixed routes
   const localeMatch = pathnameWithoutQuery.match(/^\/(ko|en)(\/.*)?$/);
   if (localeMatch) {
     const pathWithoutLocale = localeMatch[2] || "/";
@@ -15,7 +16,8 @@ export function middleware(request: NextRequest) {
     request.nextUrl.searchParams.forEach((value, key) => {
       redirectUrl.searchParams.set(key, value);
     });
-    return NextResponse.redirect(redirectUrl);
+    // Use permanent redirect (308) to prevent caching of locale URLs
+    return NextResponse.redirect(redirectUrl, 308);
   }
 
   // Protected app routes that require authentication
