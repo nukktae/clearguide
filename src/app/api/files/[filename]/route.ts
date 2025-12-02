@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFilePath, fileExists } from "@/src/lib/storage/files";
 import { requireAuth } from "@/src/lib/auth/api-auth";
 import { getDocumentByFilePath } from "@/src/lib/firebase/firestore-documents";
-import { promises as fs } from "fs";
+import { supabase } from "@/src/lib/supabase/client";
 
 export const runtime = "nodejs";
 
+// Supabase Storage bucket name for document files
+const SUPABASE_BUCKET_NAME = process.env.SUPABASE_STORAGE_BUCKET || "clearguide-files";
+
 /**
- * GET /app/api/files/[filename]
- * Serve uploaded files with authentication and ownership verification
+ * GET /api/files/[filename]
+ * Serve uploaded files from Supabase Storage with authentication and ownership verification
  */
 export async function GET(
   request: NextRequest,
@@ -37,17 +39,42 @@ export async function GET(
       );
     }
 
-    // Check if file exists on disk
-    if (!(await fileExists(filename))) {
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.error("[API Files] Supabase not configured");
       return NextResponse.json(
-        { error: "File not found" },
+        { error: "Storage service not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Download file from Supabase Storage
+    console.log("[API Files] Downloading from Supabase:", {
+      bucket: SUPABASE_BUCKET_NAME,
+      filename,
+      userId,
+    });
+
+    const { data, error } = await supabase
+      .storage
+      .from(SUPABASE_BUCKET_NAME)
+      .download(filename);
+
+    if (error || !data) {
+      console.error("[API Files] Supabase download error:", {
+        error: error?.message,
+        filename,
+        bucket: SUPABASE_BUCKET_NAME,
+      });
+      return NextResponse.json(
+        { error: "File not found", details: error?.message },
         { status: 404 }
       );
     }
 
-    // Read file
-    const filePath = getFilePath(filename);
-    const fileBuffer = await fs.readFile(filePath);
+    // Convert blob to buffer
+    const arrayBuffer = await data.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
 
     // Determine content type
     const ext = filename.split(".").pop()?.toLowerCase();
@@ -82,7 +109,7 @@ export async function GET(
       );
     }
     
-    console.error("File serve error:", error);
+    console.error("[API Files] File serve error:", error);
     return NextResponse.json(
       {
         error: "파일을 불러오는 중 오류가 발생했습니다.",

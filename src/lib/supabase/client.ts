@@ -1,6 +1,6 @@
 /**
- * Supabase client for vector database operations
- * Used for RAG (Retrieval-Augmented Generation) system
+ * Supabase client for vector database operations and file storage
+ * Used for RAG (Retrieval-Augmented Generation) system and document file storage
  */
 
 import { createClient } from "@supabase/supabase-js";

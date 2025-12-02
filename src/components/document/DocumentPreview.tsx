@@ -23,7 +23,7 @@ export function DocumentPreview({
 }: DocumentPreviewProps) {
   const isPDF = fileType === "application/pdf";
   const isImage = fileType.startsWith("image/");
-  const fileUrl = filePath ? `/app/api/files/${filePath}` : undefined;
+  const fileUrl = filePath ? `/api/files/${filePath}` : undefined;
 
   return (
     <div

@@ -141,11 +141,12 @@ export async function deleteDocumentAndRelatedData(
     const document = await getDocumentById(documentId, userId);
     
     if (document) {
-      // Delete physical file if filePath exists
+      // Delete physical file from Supabase Storage if filePath exists
       if (document.filePath) {
         try {
-          await deleteFile(document.filePath);
-          console.log(`[Storage] Deleted physical file: ${document.filePath}`);
+          const { deleteFileFromSupabase } = await import('./supabase-storage');
+          await deleteFileFromSupabase(document.filePath);
+          console.log(`[Storage] Deleted physical file from Supabase: ${document.filePath}`);
         } catch (error) {
           console.warn(`[Storage] Could not delete physical file ${document.filePath}:`, error);
         }

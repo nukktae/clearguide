@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { saveUploadedFile } from "@/src/lib/storage/files";
 import { requireAuth } from "@/src/lib/auth/api-auth";
 import { saveDocument } from "@/src/lib/firebase/firestore-documents";
+import { supabase } from "@/src/lib/supabase/client";
 import type { DocumentRecord } from "@/src/lib/parsing/types";
+import path from "path";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -71,27 +72,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save file to disk
+    // Upload file to Supabase Storage
     const documentId = uuidv4();
-    console.log("[API Upload] Attempting to save file to disk...", {
+    const SUPABASE_BUCKET_NAME = process.env.SUPABASE_STORAGE_BUCKET || "clearguide-files";
+    
+    // Get file extension from original filename or MIME type
+    const originalName = file.name;
+    const extension = path.extname(originalName) || getExtensionFromMimeType(file.type);
+    const fileName = `${documentId}${extension}`;
+    
+    console.log("[API Upload] Attempting to upload file to Supabase Storage...", {
       documentId,
-      fileName: file.name,
+      fileName,
+      originalFileName: file.name,
       fileSize: file.size,
+      bucket: SUPABASE_BUCKET_NAME,
     });
-    let savedFileName: string;
-    try {
-      savedFileName = await saveUploadedFile(file, documentId);
-      console.log("[API Upload] File saved successfully:", savedFileName);
-    } catch (saveError) {
-      console.error("[API Upload] File save error:", {
-        documentId,
-        fileName: file.name,
-        fileSize: file.size,
-        error: saveError instanceof Error ? saveError.message : String(saveError),
-        stack: saveError instanceof Error ? saveError.stack : undefined,
-      });
-      throw new Error(`파일 저장 실패: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+    
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.error("[API Upload] Supabase not configured");
+      return NextResponse.json(
+        { error: "Storage service not configured" },
+        { status: 500 }
+      );
     }
+    
+    // Convert File to ArrayBuffer for Supabase upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from(SUPABASE_BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false, // Don't overwrite existing files
+      });
+    
+    if (uploadError || !uploadData) {
+      console.error("[API Upload] Supabase upload error:", {
+        documentId,
+        fileName,
+        error: uploadError?.message,
+        bucket: SUPABASE_BUCKET_NAME,
+      });
+      throw new Error(`파일 저장 실패: ${uploadError?.message || "Supabase upload failed"}`);
+    }
+    
+    console.log("[API Upload] File uploaded successfully to Supabase:", {
+      fileName,
+      path: uploadData.path,
+      bucket: SUPABASE_BUCKET_NAME,
+    });
+    
+    const savedFileName = fileName;
 
     // Create document record (without OCR - OCR is separate endpoint)
     const documentRecord: DocumentRecord = {
@@ -193,5 +229,23 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper to get extension from MIME type
+function getExtensionFromMimeType(mimeType: string): string {
+  const mimeToExt: Record<string, string> = {
+    "application/pdf": ".pdf",
+    "image/jpeg": ".jpg",
+    "image/jpg": ".jpg",
+    "image/png": ".png",
+    // HWP (Hancom) formats
+    "application/vnd.hancom.hwp": ".hwp",
+    "application/x-hwp": ".hwp",
+    "application/haansofthwp": ".hwp",
+    // Word formats
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/msword": ".doc",
+  };
+  return mimeToExt[mimeType] || "";
 }
 
