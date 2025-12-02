@@ -11,6 +11,7 @@ import {
   getDocument,
   getDocuments,
   createDocument,
+  deleteDocument,
   firestoreQuery,
 } from "./firestore";
 
@@ -280,6 +281,64 @@ export async function getAllUserOCRResults(userId: string): Promise<Array<{
   } catch (error) {
     console.error("[Firestore OCR] Error getting user OCR results:", error);
     throw error;
+  }
+}
+
+/**
+ * Delete OCR result by fileName
+ */
+export async function deleteOCRResultByFileName(
+  fileName: string,
+  userId: string
+): Promise<boolean> {
+  try {
+    const constraints = [
+      where("fileName", "==", fileName),
+      where("userId", "==", userId),
+    ];
+    
+    const ocrDocs = await getDocuments<FirestoreOCRResult & { id: string }>(
+      OCR_COLLECTION_NAME,
+      constraints
+    );
+    
+    // Delete all OCR results for this fileName
+    for (const ocrDoc of ocrDocs) {
+      await deleteDocument(OCR_COLLECTION_NAME, ocrDoc.id);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("[Firestore OCR] Error deleting OCR result:", error);
+    return false;
+  }
+}
+
+/**
+ * Delete OCR result by ID
+ */
+export async function deleteOCRResultById(
+  ocrId: string,
+  userId?: string
+): Promise<boolean> {
+  try {
+    // Verify ownership if userId is provided
+    if (userId) {
+      const ocrDoc = await getDocument<FirestoreOCRResult>(
+        OCR_COLLECTION_NAME,
+        ocrId
+      );
+      
+      if (!ocrDoc || ocrDoc.userId !== userId) {
+        return false;
+      }
+    }
+    
+    await deleteDocument(OCR_COLLECTION_NAME, ocrId);
+    return true;
+  } catch (error) {
+    console.error("[Firestore OCR] Error deleting OCR result:", error);
+    return false;
   }
 }
 

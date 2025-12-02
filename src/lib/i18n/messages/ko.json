@@ -120,6 +120,35 @@
       "terms": "이용약관",
       "privacy": "개인정보처리방침",
       "contact": "문의하기"
+    },
+    "roadmap": {
+      "title": "성장 로드맵",
+      "subtitle": "단계적 확장을 통해 더 많은 사람들에게 가치를 전달합니다",
+      "comingSoon": "Coming Soon",
+      "phase1": {
+        "label": "Phase 1",
+        "title": "무료 공공문서 서비스",
+        "description": "세금고지서, 과태료, 주민센터 안내문 등 공공문서 분석 서비스를 전국민에게 무료로 제공합니다.",
+        "status": "현재 진행 중"
+      },
+      "phase2": {
+        "label": "Phase 2",
+        "title": "공공기관 파트너십",
+        "description": "지자체 및 공공기관과 협력하여 민원 감소와 행정 효율성을 높입니다.",
+        "status": "준비 중"
+      },
+      "phase3": {
+        "label": "Phase 3",
+        "title": "B2B API 서비스",
+        "description": "보험사, 금융기관, 통신사 등 기업 고객을 위한 문서 분석 API를 제공합니다.",
+        "status": "계획됨"
+      },
+      "phase4": {
+        "label": "Phase 4",
+        "title": "프리미엄 개인 서비스",
+        "description": "계약서/청구서 자동 정리, 마감일 알림, 개인 문서 관리 등 프리미엄 기능을 제공합니다.",
+        "status": "계획됨"
+      }
     }
   },
   "documentTypes": {

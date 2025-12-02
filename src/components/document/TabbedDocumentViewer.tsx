@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Image as ImageIcon } from "lucide-react";
+import { FileText, Image as ImageIcon, FileCode, Download } from "lucide-react";
 import { cn } from "@/src/lib/utils/cn";
 import { ParsedDocument, DocumentRecord } from "@/src/lib/parsing/types";
 import { PDFViewer } from "./PDFViewer";
@@ -10,6 +10,28 @@ interface TabbedDocumentViewerProps {
   document: DocumentRecord;
   parsedDocument?: ParsedDocument;
   className?: string;
+}
+
+// Helper to detect file types
+function isHWPFileType(fileType: string | undefined, fileName: string | undefined): boolean {
+  const hwpMimeTypes = [
+    "application/vnd.hancom.hwp",
+    "application/x-hwp",
+    "application/haansofthwp",
+  ];
+  return hwpMimeTypes.includes(fileType || "") || 
+         (fileName?.toLowerCase().endsWith(".hwp") ?? false);
+}
+
+function isWordFileType(fileType: string | undefined, fileName: string | undefined): boolean {
+  const wordMimeTypes = [
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+  ];
+  const lowerFileName = fileName?.toLowerCase() ?? "";
+  return wordMimeTypes.includes(fileType || "") || 
+         lowerFileName.endsWith(".docx") || 
+         (lowerFileName.endsWith(".doc") && !lowerFileName.endsWith(".docx"));
 }
 
 export function TabbedDocumentViewer({
@@ -24,6 +46,8 @@ export function TabbedDocumentViewer({
   
   const isPDF = document.fileType === "application/pdf";
   const isImage = document.fileType?.startsWith("image/") ?? false;
+  const isHWP = isHWPFileType(document.fileType, document.fileName);
+  const isWord = isWordFileType(document.fileType, document.fileName);
   
   // Construct file URL - try filePath first, then fallback to document ID + extension
   const getFileUrl = (): string | undefined => {
@@ -32,9 +56,20 @@ export function TabbedDocumentViewer({
     }
     // Fallback: try to construct from document ID and file type
     if (document.id && document.fileType) {
-      const extension = isPDF ? '.pdf' : 
-                       document.fileType.includes('jpeg') || document.fileType.includes('jpg') ? '.jpg' :
-                       document.fileType.includes('png') ? '.png' : '';
+      let extension = '';
+      if (isPDF) {
+        extension = '.pdf';
+      } else if (document.fileType.includes('jpeg') || document.fileType.includes('jpg')) {
+        extension = '.jpg';
+      } else if (document.fileType.includes('png')) {
+        extension = '.png';
+      } else if (isHWP) {
+        extension = '.hwp';
+      } else if (document.fileType.includes('wordprocessingml')) {
+        extension = '.docx';
+      } else if (document.fileType === 'application/msword') {
+        extension = '.doc';
+      }
       if (extension) {
         return `/app/api/files/${document.id}${extension}`;
       }
@@ -120,7 +155,7 @@ export function TabbedDocumentViewer({
               : "text-[#6D6D6D] hover:text-[#1A1A1A]"
           )}
         >
-          {isPDF || isImage ? "이미지 보기" : "문서 보기"}
+          {isPDF ? "PDF 보기" : isImage ? "이미지 보기" : isHWP ? "HWP 문서" : isWord ? "Word 문서" : "문서 보기"}
           {activeTab === "preview" && (
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1C2329]" />
           )}
@@ -176,6 +211,56 @@ export function TabbedDocumentViewer({
                       }}
                   />
                   )
+                ) : isHWP ? (
+                  <div className="text-center p-8">
+                    <FileCode className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">HWP 문서</p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      한글(HWP) 파일은 브라우저에서 직접 미리보기가 지원되지 않습니다.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab("text")}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                      추출된 텍스트 보기
+                    </button>
+                    {fileUrl && (
+                      <a
+                        href={fileUrl}
+                        download={document.fileName}
+                        className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors ml-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        파일 다운로드
+                      </a>
+                    )}
+                  </div>
+                ) : isWord ? (
+                  <div className="text-center p-8">
+                    <FileCode className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">Word 문서</p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Word 파일은 브라우저에서 직접 미리보기가 지원되지 않습니다.
+                    </p>
+                    <button
+                      onClick={() => setActiveTab("text")}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                      추출된 텍스트 보기
+                    </button>
+                    {fileUrl && (
+                      <a
+                        href={fileUrl}
+                        download={document.fileName}
+                        className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors ml-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        파일 다운로드
+                      </a>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center p-8">
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />

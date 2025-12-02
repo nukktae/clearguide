@@ -5,6 +5,12 @@ import { saveOCRResult, getAllUserOCRResults } from "@/src/lib/firebase/firestor
 import { getDocumentById } from "@/src/lib/firebase/firestore-documents";
 import { getFilePath, fileExists } from "@/src/lib/storage/files";
 import { promises as fs } from "fs";
+import { chunkTextWithPages, embedChunks, getOptimalChunkParams } from "@/src/lib/rag";
+import { storeChunks, deleteChunksByDocumentId } from "@/src/lib/supabase/vectors";
+import { isSupabaseConfigured } from "@/src/lib/supabase/client";
+import { maskAll } from "@/src/lib/privacy/masker";
+import { getPrivacySettings } from "@/src/lib/firebase/firestore-privacy";
+import { deleteNow, saveWithTTL } from "@/src/lib/privacy/retention";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -238,30 +244,104 @@ export async function POST(request: NextRequest) {
     // Extract text using GPT-4o vision
     const ocrResult = await extractTextWithGPT4o(file);
 
-    // Save OCR result to Firestore and get OCR ID
-    console.log("[API OCR] Saving OCR result to Firestore...");
+    // Get user privacy settings
+    const privacySettings = await getPrivacySettings(userId);
+    console.log("[API OCR] Privacy settings:", {
+      maskingMode: privacySettings.maskingMode,
+      autoDelete: privacySettings.autoDelete,
+    });
+
+    // Mask PII before saving to Firestore (never persist raw PII)
+    const maskedResult = maskAll(ocrResult.text, {
+      mode: privacySettings.maskingMode,
+      preserveFormat: true,
+    });
+    
+    console.log("[API OCR] PII masking result:", {
+      originalLength: maskedResult.metadata.originalLength,
+      maskedLength: maskedResult.metadata.maskedLength,
+      piiTypesFound: maskedResult.metadata.piiTypes,
+      itemsMasked: maskedResult.metadata.maskedItems.length,
+    });
+
+    // Save MASKED OCR result to Firestore (never save raw text)
+    console.log("[API OCR] Saving masked OCR result to Firestore...");
     const ocrId = await saveOCRResult(
       userId,
-      ocrResult.text,
+      maskedResult.maskedText, // Use masked text, not raw text
       document.fileType,
       document.fileName,
       ocrResult.confidence,
       ocrResult.pageCount
     );
-    console.log("[API OCR] OCR result saved:", {
+    console.log("[API OCR] Masked OCR result saved:", {
       ocrId,
-      textLength: ocrResult.text.length,
+      textLength: maskedResult.maskedText.length,
       confidence: ocrResult.confidence,
       pageCount: ocrResult.pageCount,
     });
+
+    // Handle auto-delete based on privacy settings
+    if (privacySettings.autoDelete === "immediate") {
+      console.log("[API OCR] Auto-delete is set to immediate, deleting document...");
+      await deleteNow(documentId, userId);
+    } else if (privacySettings.autoDelete === "24h") {
+      console.log("[API OCR] Auto-delete is set to 24h, scheduling deletion...");
+      await saveWithTTL(documentId, userId, 24);
+    }
+
+    // RAG: Generate embeddings for the MASKED document text (never use raw text)
+    let embeddingsGenerated = 0;
+    if (isSupabaseConfigured() && maskedResult.maskedText.length > 0) {
+      try {
+        console.log("[API OCR] Starting RAG embedding pipeline with masked text...");
+        
+        // Delete any existing chunks for this document (re-processing)
+        await deleteChunksByDocumentId(documentId, userId);
+        
+        // Get optimal chunking parameters based on masked text length
+        const { chunkSize, chunkOverlap } = getOptimalChunkParams(maskedResult.maskedText.length);
+        console.log("[API OCR] Chunking with params:", { chunkSize, chunkOverlap, textLength: maskedResult.maskedText.length });
+        
+        // Chunk the MASKED OCR text with page detection (never use raw text)
+        const chunks = chunkTextWithPages(maskedResult.maskedText, {
+          chunkSize,
+          chunkOverlap,
+          fileName: document.fileName,
+        });
+        console.log("[API OCR] Created chunks:", { count: chunks.length });
+        
+        if (chunks.length > 0) {
+          // Generate embeddings for all chunks (using masked text)
+          const embeddedChunks = await embedChunks(chunks, documentId, userId);
+          console.log("[API OCR] Generated embeddings:", { count: embeddedChunks.length });
+          
+          // Store chunks in Supabase vector DB (contains masked text only)
+          embeddingsGenerated = await storeChunks(embeddedChunks);
+          console.log("[API OCR] Stored chunks in vector DB:", { count: embeddingsGenerated });
+        }
+      } catch (ragError) {
+        // Log RAG error but don't fail the OCR request
+        console.error("[API OCR] RAG embedding pipeline error (non-fatal):", ragError);
+      }
+    } else {
+      console.log("[API OCR] Skipping RAG pipeline:", {
+        supabaseConfigured: isSupabaseConfigured(),
+        hasText: maskedResult.maskedText.length > 0,
+      });
+    }
 
     console.log("[API OCR] ===== OCR SUCCESS =====");
     return NextResponse.json({
       success: true,
       ocrId,
-      text: ocrResult.text,
+      text: maskedResult.maskedText, // Return masked text (never expose raw PII)
       confidence: ocrResult.confidence,
       pageCount: ocrResult.pageCount,
+      ragEnabled: isSupabaseConfigured(),
+      embeddingsGenerated,
+      piiMasked: maskedResult.metadata.maskedItems.length > 0,
+      piiTypes: maskedResult.metadata.piiTypes,
     });
   } catch (error) {
     console.error("[API] OCR error:", error);

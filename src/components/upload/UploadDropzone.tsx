@@ -14,7 +14,7 @@ export interface UploadDropzoneProps {
 
 export function UploadDropzone({
   onFileSelect,
-  acceptedTypes = "application/pdf,image/jpeg,image/jpg,image/png",
+  acceptedTypes = "application/pdf,image/jpeg,image/jpg,image/png,application/vnd.hancom.hwp,application/x-hwp,application/haansofthwp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword",
   maxSize = 10 * 1024 * 1024, // 10MB
   className,
 }: UploadDropzoneProps) {
@@ -56,8 +56,14 @@ export function UploadDropzone({
     }
 
     const allowedTypes = acceptedTypes.split(",").map((t) => t.trim());
-    if (!allowedTypes.includes(file.type)) {
-      alert("지원하지 않는 파일 형식입니다. PDF, JPG, PNG만 지원됩니다.");
+    const fileName = file.name.toLowerCase();
+    const isValidByExtension = 
+      fileName.endsWith(".hwp") || 
+      fileName.endsWith(".doc") || 
+      fileName.endsWith(".docx");
+    
+    if (!allowedTypes.includes(file.type) && !isValidByExtension) {
+      alert("지원하지 않는 파일 형식입니다. PDF, JPG, PNG, HWP, DOC, DOCX만 지원됩니다.");
       return;
     }
 
@@ -94,7 +100,7 @@ export function UploadDropzone({
             파일을 여기로 끌어다 놓거나 클릭하여 업로드하세요
           </p>
           <p className="text-sm text-[#6D6D6D] dark:text-gray-400 font-light">
-            PDF, JPG, PNG (최대 10MB)
+            PDF, JPG, PNG, HWP, DOC, DOCX (최대 10MB)
           </p>
           <button
             type="button"

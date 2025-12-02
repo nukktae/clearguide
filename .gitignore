@@ -43,3 +43,12 @@ next-env.d.ts
 # data directory (user uploads and documents)
 /data/
 .env*.local
+
+# portfolio and report files (private)
+QUICK_PORTFOLIO_ENTRY.md
+TECHNICAL_PORTFOLIO_ANALYSIS.md
+TECHNICAL_CHALLENGES_ANALYSIS.md
+TECHNICAL_CHALLENGES_VERIFICATION_REPORT.md
+TECHNICAL_CHALLENGES_VERIFICATION.md
+PORTFOLIO_SUMMARY.md
+2025_AI_챌린지_성과보고서.md

@@ -45,10 +45,23 @@ export async function POST(request: NextRequest) {
       "image/jpeg",
       "image/jpg",
       "image/png",
+      // HWP (Hancom) formats
+      "application/vnd.hancom.hwp",
+      "application/x-hwp",
+      "application/haansofthwp",
+      // Word formats
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
     ];
-    if (!allowedTypes.includes(file.type)) {
+    const fileName = file.name.toLowerCase();
+    const isValidByExtension = 
+      fileName.endsWith(".hwp") || 
+      fileName.endsWith(".doc") || 
+      fileName.endsWith(".docx");
+    
+    if (!allowedTypes.includes(file.type) && !isValidByExtension) {
       return NextResponse.json(
-        { error: "지원하지 않는 파일 형식입니다. PDF, JPG, PNG만 지원됩니다." },
+        { error: "지원하지 않는 파일 형식입니다. PDF, JPG, PNG, HWP, DOC, DOCX만 지원됩니다." },
         { status: 400 }
       );
     }

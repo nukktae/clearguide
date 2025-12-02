@@ -1,5 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { openai } from "@/src/lib/openai/client";
+import { extractTextFromHWP, isHWPFile } from "./hwpExtractor";
+import { extractTextFromDOCX, extractTextFromDOC, isDOCXFile, isDOCFile } from "./docxExtractor";
 
 export interface OCRResult {
   text: string;
@@ -56,16 +58,65 @@ export async function extractTextFromImage(file: File): Promise<OCRResult> {
 
 /**
  * Extract text using GPT-4o vision API
- * Supports both images and PDFs
+ * Supports images, PDFs, and as fallback for HWP/DOCX files
  */
 export async function extractTextWithGPT4o(file: File): Promise<OCRResult> {
+  const fileType = file.type;
+  const fileName = file.name.toLowerCase();
+  
+  // For HWP files, try native parsing first, then fallback to GPT-4o
+  if (isHWPFile(file)) {
+    try {
+      console.log("[OCR] Attempting native HWP extraction for:", file.name);
+      return await extractTextFromHWP(file);
+    } catch (hwpError) {
+      console.warn("[OCR] HWP native extraction failed, falling back to GPT-4o Vision:", hwpError);
+      // Continue to GPT-4o Vision fallback below
+    }
+  }
+  
+  // For DOCX files, try native parsing first, then fallback to GPT-4o
+  if (isDOCXFile(file)) {
+    try {
+      console.log("[OCR] Attempting native DOCX extraction for:", file.name);
+      return await extractTextFromDOCX(file);
+    } catch (docxError) {
+      console.warn("[OCR] DOCX native extraction failed, falling back to GPT-4o Vision:", docxError);
+      // Continue to GPT-4o Vision fallback below
+    }
+  }
+  
+  // For legacy DOC files, try native parsing first, then fallback to GPT-4o
+  if (isDOCFile(file)) {
+    try {
+      console.log("[OCR] Attempting native DOC extraction for:", file.name);
+      return await extractTextFromDOC(file);
+    } catch (docError) {
+      console.warn("[OCR] DOC native extraction failed, falling back to GPT-4o Vision:", docError);
+      // Continue to GPT-4o Vision fallback below
+    }
+  }
+  
   try {
-    const fileType = file.type;
     const base64 = await fileToBase64(file);
     
-    // For PDFs, GPT-4o can read them directly
-    // For images, use image_url format
-    const imageUrl = `data:${fileType};base64,${base64}`;
+    // Determine MIME type for the data URL
+    // For HWP/DOC/DOCX files that failed native parsing, treat as generic document
+    let mimeType = fileType;
+    if (!mimeType || mimeType === "application/octet-stream") {
+      // Fallback MIME type detection based on extension
+      if (fileName.endsWith(".hwp")) {
+        mimeType = "application/vnd.hancom.hwp";
+      } else if (fileName.endsWith(".docx")) {
+        mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      } else if (fileName.endsWith(".doc")) {
+        mimeType = "application/msword";
+      }
+    }
+    
+    // For PDFs and images, GPT-4o can read them directly
+    // For other formats, we send as-is and let GPT-4o try to interpret
+    const imageUrl = `data:${mimeType};base64,${base64}`;
     
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -117,7 +168,7 @@ export async function extractTextWithGPT4o(file: File): Promise<OCRResult> {
         pageCount = 1; // Fallback
       }
     } else {
-      pageCount = 1; // Images are single page
+      pageCount = 1; // Images and other formats are treated as single page
     }
 
     return {
@@ -140,13 +191,28 @@ export async function extractTextWithGPT4o(file: File): Promise<OCRResult> {
  */
 export async function extractText(file: File): Promise<OCRResult> {
   const fileType = file.type;
+  const fileName = file.name.toLowerCase();
   
   if (fileType === "application/pdf") {
     return extractTextFromPDF(file);
   } else if (fileType.startsWith("image/")) {
     return extractTextFromImage(file);
+  } else if (isHWPFile(file)) {
+    // For HWP files, return a mock result (actual extraction happens in extractTextWithGPT4o)
+    return {
+      text: `[HWP 파일 처리됨: ${file.name}]\n\nHWP 파일의 텍스트를 추출 중입니다.`,
+      confidence: 0.8,
+      pageCount: 1,
+    };
+  } else if (isDOCXFile(file) || isDOCFile(file)) {
+    // For Word files, return a mock result (actual extraction happens in extractTextWithGPT4o)
+    return {
+      text: `[Word 파일 처리됨: ${file.name}]\n\nWord 파일의 텍스트를 추출 중입니다.`,
+      confidence: 0.8,
+      pageCount: 1,
+    };
   } else {
-    throw new Error(`지원하지 않는 파일 형식입니다: ${fileType}`);
+    throw new Error(`지원하지 않는 파일 형식입니다: ${fileType || fileName}`);
   }
 }
 

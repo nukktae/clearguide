@@ -119,6 +119,35 @@
       "terms": "Terms of Service",
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
+    },
+    "roadmap": {
+      "title": "Growth Roadmap",
+      "subtitle": "Delivering value to more people through phased expansion",
+      "comingSoon": "Coming Soon",
+      "phase1": {
+        "label": "Phase 1",
+        "title": "Free Public Document Service",
+        "description": "Providing free public document analysis for tax notices, fines, community center notices, and more to all citizens.",
+        "status": "In Progress"
+      },
+      "phase2": {
+        "label": "Phase 2",
+        "title": "Public Institution Partnerships",
+        "description": "Partnering with municipalities and public agencies to reduce civil complaints and increase administrative efficiency.",
+        "status": "Preparing"
+      },
+      "phase3": {
+        "label": "Phase 3",
+        "title": "B2B API Service",
+        "description": "Providing document analysis API for enterprise customers including insurance companies, financial institutions, and telecom providers.",
+        "status": "Planned"
+      },
+      "phase4": {
+        "label": "Phase 4",
+        "title": "Premium Personal Service",
+        "description": "Premium features including auto-organizing contracts/bills, deadline reminders, and personal document management.",
+        "status": "Planned"
+      }
     }
   },
   "documentTypes": {

@@ -115,17 +115,26 @@ export function ChatInput({
       "image/jpeg",
       "image/jpg",
       "image/png",
+      "application/vnd.hancom.hwp",
+      "application/x-hwp",
+      "application/haansofthwp",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
     ];
     const fileType = file.type.toLowerCase();
+    const fileName = file.name.toLowerCase();
     const isValidType =
       allowedTypes.includes(fileType) ||
-      file.name.toLowerCase().endsWith(".pdf") ||
-      file.name.toLowerCase().endsWith(".jpg") ||
-      file.name.toLowerCase().endsWith(".jpeg") ||
-      file.name.toLowerCase().endsWith(".png");
+      fileName.endsWith(".pdf") ||
+      fileName.endsWith(".jpg") ||
+      fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".png") ||
+      fileName.endsWith(".hwp") ||
+      fileName.endsWith(".doc") ||
+      fileName.endsWith(".docx");
 
     if (!isValidType) {
-      alert("지원되는 파일 형식: PDF, JPG, PNG");
+      alert("지원되는 파일 형식: PDF, JPG, PNG, HWP, DOC, DOCX");
       return;
     }
 
@@ -163,7 +172,7 @@ export function ChatInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+        accept=".pdf,.jpg,.jpeg,.png,.hwp,.doc,.docx,application/pdf,image/jpeg,image/png,application/vnd.hancom.hwp,application/x-hwp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
         onChange={handleFileSelect}
         className="hidden"
         disabled={disabled}
