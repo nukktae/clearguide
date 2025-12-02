@@ -10,6 +10,11 @@ export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   console.log("[API Upload] ===== UPLOAD REQUEST START =====");
+  console.log("[API Upload] Environment:", {
+    isVercel: process.env.VERCEL === "1",
+    nodeEnv: process.env.NODE_ENV,
+    vercelEnv: process.env.VERCEL,
+  });
   try {
     // Require authentication
     const userId = await requireAuth(request);
@@ -68,7 +73,25 @@ export async function POST(request: NextRequest) {
 
     // Save file to disk
     const documentId = uuidv4();
-    const savedFileName = await saveUploadedFile(file, documentId);
+    console.log("[API Upload] Attempting to save file to disk...", {
+      documentId,
+      fileName: file.name,
+      fileSize: file.size,
+    });
+    let savedFileName: string;
+    try {
+      savedFileName = await saveUploadedFile(file, documentId);
+      console.log("[API Upload] File saved successfully:", savedFileName);
+    } catch (saveError) {
+      console.error("[API Upload] File save error:", {
+        documentId,
+        fileName: file.name,
+        fileSize: file.size,
+        error: saveError instanceof Error ? saveError.message : String(saveError),
+        stack: saveError instanceof Error ? saveError.stack : undefined,
+      });
+      throw new Error(`파일 저장 실패: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+    }
 
     // Create document record (without OCR - OCR is separate endpoint)
     const documentRecord: DocumentRecord = {
@@ -95,7 +118,14 @@ export async function POST(request: NextRequest) {
       document: savedDocument,
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("[API Upload] ===== UPLOAD ERROR =====");
+    console.error("[API Upload] Error details:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      isVercel: process.env.VERCEL === "1",
+      nodeEnv: process.env.NODE_ENV,
+    });
     
     // Handle authentication errors
     if (error instanceof Error && error.message.includes("Unauthorized")) {
@@ -105,10 +135,28 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Check for filesystem-related errors
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isFilesystemError = 
+      errorMessage.includes("ENOENT") ||
+      errorMessage.includes("EACCES") ||
+      errorMessage.includes("EPERM") ||
+      errorMessage.includes("파일 저장 실패") ||
+      errorMessage.includes("Failed to create uploads directory");
+    
+    if (isFilesystemError) {
+      console.error("[API Upload] Filesystem error detected - this may indicate Vercel filesystem issue");
+    }
+    
     return NextResponse.json(
       {
         error: "파일 업로드 중 오류가 발생했습니다.",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
+        // Include more details in development, less in production for security
+        ...(process.env.NODE_ENV === "development" && {
+          stack: error instanceof Error ? error.stack : undefined,
+          isVercel: process.env.VERCEL === "1",
+        }),
       },
       { status: 500 }
     );

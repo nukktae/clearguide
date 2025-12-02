@@ -1,14 +1,39 @@
 import { promises as fs } from "fs";
 import path from "path";
 
-const UPLOADS_DIR = path.join(process.cwd(), "data", "uploads");
+// Detect Vercel environment - use /tmp for serverless, data/uploads for local dev
+// Vercel sets VERCEL=1 environment variable
+const isVercel = process.env.VERCEL === "1";
+const UPLOADS_DIR = isVercel 
+  ? path.join("/tmp", "uploads")
+  : path.join(process.cwd(), "data", "uploads");
+
+// Log which directory is being used (helpful for debugging)
+if (isVercel) {
+  console.log("[Storage] Using Vercel serverless environment - files will be stored in /tmp/uploads");
+} else {
+  console.log("[Storage] Using local development environment - files will be stored in data/uploads");
+}
 
 // Ensure uploads directory exists
 export async function ensureUploadsDirectory() {
   try {
     await fs.access(UPLOADS_DIR);
-  } catch {
-    await fs.mkdir(UPLOADS_DIR, { recursive: true });
+    console.log("[Storage] Uploads directory exists:", UPLOADS_DIR);
+  } catch (error) {
+    console.log("[Storage] Creating uploads directory:", UPLOADS_DIR);
+    try {
+      await fs.mkdir(UPLOADS_DIR, { recursive: true });
+      console.log("[Storage] Uploads directory created successfully");
+    } catch (mkdirError) {
+      console.error("[Storage] Failed to create uploads directory:", {
+        path: UPLOADS_DIR,
+        error: mkdirError instanceof Error ? mkdirError.message : String(mkdirError),
+        isVercel,
+        vercelEnv: process.env.VERCEL,
+      });
+      throw new Error(`Failed to create uploads directory: ${mkdirError instanceof Error ? mkdirError.message : String(mkdirError)}`);
+    }
   }
 }
 
@@ -17,20 +42,60 @@ export async function saveUploadedFile(
   file: File,
   documentId: string
 ): Promise<string> {
-  await ensureUploadsDirectory();
+  try {
+    await ensureUploadsDirectory();
 
-  // Get file extension from original filename or MIME type
-  const originalName = file.name;
-  const extension = path.extname(originalName) || getExtensionFromMimeType(file.type);
-  const fileName = `${documentId}${extension}`;
-  const filePath = path.join(UPLOADS_DIR, fileName);
+    // Get file extension from original filename or MIME type
+    const originalName = file.name;
+    const extension = path.extname(originalName) || getExtensionFromMimeType(file.type);
+    const fileName = `${documentId}${extension}`;
+    const filePath = path.join(UPLOADS_DIR, fileName);
 
-  // Convert File to Buffer and save
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  await fs.writeFile(filePath, buffer);
+    console.log("[Storage] Saving file:", {
+      fileName,
+      filePath,
+      fileSize: file.size,
+      fileType: file.type,
+      isVercel,
+    });
 
-  return fileName; // Return just the filename, not full path
+    // Convert File to Buffer and save
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    await fs.writeFile(filePath, buffer);
+
+    // Verify file was written successfully
+    try {
+      const stats = await fs.stat(filePath);
+      console.log("[Storage] File saved successfully:", {
+        fileName,
+        filePath,
+        size: stats.size,
+      });
+    } catch (verifyError) {
+      console.error("[Storage] File write verification failed:", {
+        fileName,
+        filePath,
+        error: verifyError instanceof Error ? verifyError.message : String(verifyError),
+      });
+      throw new Error(`File was written but verification failed: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
+    }
+
+    return fileName; // Return just the filename, not full path
+  } catch (error) {
+    console.error("[Storage] Error saving uploaded file:", {
+      documentId,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      uploadsDir: UPLOADS_DIR,
+      isVercel,
+      vercelEnv: process.env.VERCEL,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw error;
+  }
 }
 
 // Get file path by filename
