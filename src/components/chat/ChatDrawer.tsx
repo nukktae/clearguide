@@ -167,7 +167,7 @@ export function ChatDrawer({
               const formData = new FormData();
               formData.append("file", file);
 
-              const uploadResponse = await fetch("/app/api/upload", {
+              const uploadResponse = await fetch("/api/upload", {
                 method: "POST",
                 headers,
                 body: formData,

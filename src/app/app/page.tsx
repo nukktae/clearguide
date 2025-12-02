@@ -68,7 +68,7 @@ export default function AppPage() {
         "Authorization": `Bearer ${token}`,
       };
 
-      const response = await fetch("/app/api/documents", {
+      const response = await fetch("/api/documents", {
         headers,
         credentials: "include", // Ensure cookies are sent
       });
@@ -145,7 +145,7 @@ export default function AppPage() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const uploadResponse = await fetch("/app/api/upload", {
+      const uploadResponse = await fetch("/api/upload", {
         method: "POST",
         headers,
         body: formData,
@@ -163,7 +163,7 @@ export default function AppPage() {
       setUploadProgress(30);
 
       // Step 2: Extract text (OCR)
-      const ocrResponse = await fetch("/app/api/ocr", {
+      const ocrResponse = await fetch("/api/ocr", {
         method: "POST",
         headers: {
           ...headers,
@@ -186,7 +186,7 @@ export default function AppPage() {
       setUploadProgress(50);
 
       // Step 3: Create summary
-      const summaryResponse = await fetch("/app/api/summary", {
+      const summaryResponse = await fetch("/api/summary", {
         method: "POST",
         headers: {
           ...headers,
@@ -208,7 +208,7 @@ export default function AppPage() {
       setUploadProgress(70);
 
       // Step 4: Create checklist
-      const checklistResponse = await fetch("/app/api/checklist", {
+      const checklistResponse = await fetch("/api/checklist", {
         method: "POST",
         headers: {
           ...headers,
@@ -231,7 +231,7 @@ export default function AppPage() {
       setUploadProgress(90);
 
       // Step 5: Parse risks (using parse endpoint for risks only)
-      const parseResponse = await fetch("/app/api/parse", {
+      const parseResponse = await fetch("/api/parse", {
         method: "POST",
         headers: {
           ...headers,
@@ -266,7 +266,7 @@ export default function AppPage() {
       // Save parsed document back to Firestore so it's available on document detail page
       console.log("[AppPage] Saving parsed document to Firestore...");
       try {
-        const saveResponse = await fetch("/app/api/documents", {
+        const saveResponse = await fetch("/api/documents", {
           method: "POST",
           headers: {
             ...headers,
@@ -301,7 +301,7 @@ export default function AppPage() {
           const originalExt = file?.name.split('.').pop() || 'pdf';
           const newFileName = `${suggestedFileName}.${originalExt}`;
           
-          const renameResponse = await fetch(`/app/api/documents/${documentId}`, {
+          const renameResponse = await fetch(`/api/documents/${documentId}`, {
             method: "PATCH",
             headers: {
               ...headers,

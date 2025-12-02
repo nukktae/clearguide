@@ -44,7 +44,7 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
         "Authorization": `Bearer ${token}`,
       };
 
-      const response = await fetch(`/app/api/chat?conversationId=${convId}`, {
+      const response = await fetch(`/api/chat?conversationId=${convId}`, {
         headers,
         credentials: "include",
       });
@@ -112,7 +112,7 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
           fileName: file.name
         });
 
-        response = await fetch("/app/api/chat", {
+        response = await fetch("/api/chat", {
           method: "POST",
           headers,
           body: formData,
@@ -131,7 +131,7 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
           hasDocumentId: !!documentContext?.documentId 
         });
 
-        response = await fetch("/app/api/chat", {
+        response = await fetch("/api/chat", {
           method: "POST",
           headers: {
             ...headers,
@@ -245,7 +245,7 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
         "Content-Type": "application/json",
       };
 
-      const response = await fetch("/app/api/chat/conversations", {
+      const response = await fetch("/api/chat/conversations", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -287,7 +287,7 @@ export function Chatbot({ documentContext, onDocumentUploaded }: ChatbotProps) {
           "Content-Type": "application/json",
         };
 
-        const response = await fetch("/app/api/chat/conversations", {
+        const response = await fetch("/api/chat/conversations", {
           method: "POST",
           headers,
           body: JSON.stringify({

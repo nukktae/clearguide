@@ -60,7 +60,7 @@ export function TabbedDocumentViewer({
   // Construct file URL - try filePath first, then fallback to document ID + extension
   const getFileUrl = (): string | undefined => {
     if (document.filePath) {
-      return `/app/api/files/${document.filePath}`;
+      return `/api/files/${document.filePath}`;
     }
     // Fallback: try to construct from document ID and file type
     if (document.id && document.fileType) {
@@ -79,7 +79,7 @@ export function TabbedDocumentViewer({
         extension = '.doc';
       }
       if (extension) {
-        return `/app/api/files/${document.id}${extension}`;
+        return `/api/files/${document.id}${extension}`;
       }
     }
     return undefined;
@@ -227,7 +227,7 @@ export function TabbedDocumentViewer({
             "Authorization": `Bearer ${token}`,
           };
 
-          fetch(`/app/api/ocr?documentId=${document.id}`, {
+          fetch(`/api/ocr?documentId=${document.id}`, {
             headers,
             credentials: "include",
           })

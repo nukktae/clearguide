@@ -87,7 +87,7 @@ export default function DocumentDetailPage() {
       };
 
       console.log("[Document Page] Fetching document from API...");
-      const response = await fetch(`/app/api/documents/${id}`, {
+      const response = await fetch(`/api/documents/${id}`, {
         headers,
         credentials: "include",
       });
@@ -124,7 +124,7 @@ export default function DocumentDetailPage() {
         
         try {
           // Fetch summary
-          const summaryResponse = await fetch(`/app/api/summary?documentId=${id}`, {
+          const summaryResponse = await fetch(`/api/summary?documentId=${id}`, {
             headers,
             credentials: "include",
           });
@@ -145,7 +145,7 @@ export default function DocumentDetailPage() {
           }
           
           // Fetch checklist
-          const checklistResponse = await fetch(`/app/api/checklist?documentId=${id}`, {
+          const checklistResponse = await fetch(`/api/checklist?documentId=${id}`, {
             headers,
             credentials: "include",
           });

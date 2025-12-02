@@ -198,7 +198,7 @@ export function CalendarContainer({
         "Content-Type": "application/json",
       };
 
-      const response = await fetch("/app/api/calendar", {
+      const response = await fetch("/api/calendar", {
         method: "POST",
         headers,
         body: JSON.stringify(eventData),
@@ -250,7 +250,7 @@ export function CalendarContainer({
         "Content-Type": "application/json",
       };
 
-      const response = await fetch(`/app/api/calendar/${eventId}`, {
+      const response = await fetch(`/api/calendar/${eventId}`, {
         method: "PUT",
         headers,
         body: JSON.stringify(eventData),
@@ -288,7 +288,7 @@ export function CalendarContainer({
         "Authorization": `Bearer ${token}`,
       };
 
-      const response = await fetch(`/app/api/calendar/${id}`, {
+      const response = await fetch(`/api/calendar/${id}`, {
         method: "DELETE",
         headers,
         credentials: "include",

@@ -86,7 +86,7 @@ export default function AccountPage() {
           "Authorization": `Bearer ${token}`,
         };
         
-        const response = await fetch("/app/api/profile", {
+        const response = await fetch("/api/profile", {
           headers,
           credentials: "include",
         });
@@ -231,7 +231,7 @@ export default function AccountPage() {
       "Content-Type": "application/json",
     };
 
-    const response = await fetch("/app/api/profile", {
+    const response = await fetch("/api/profile", {
       method: "PUT",
       headers,
       body: JSON.stringify({ displayName: name }),
@@ -271,7 +271,7 @@ export default function AccountPage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch("/app/api/profile/photo", {
+    const response = await fetch("/api/profile/photo", {
       method: "POST",
       headers,
       body: formData,
@@ -298,7 +298,7 @@ export default function AccountPage() {
       "Content-Type": "application/json",
     };
 
-    const response = await fetch("/app/api/profile", {
+    const response = await fetch("/api/profile", {
       method: "PUT",
       headers,
       body: JSON.stringify({ photoURL: null }),

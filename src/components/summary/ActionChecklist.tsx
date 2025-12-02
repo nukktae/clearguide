@@ -163,7 +163,7 @@ export function ActionChecklist({
         "Content-Type": "application/json",
       };
 
-      const response = await fetch("/app/api/calendar", {
+      const response = await fetch("/api/calendar", {
         method: "POST",
         headers,
         body: JSON.stringify({

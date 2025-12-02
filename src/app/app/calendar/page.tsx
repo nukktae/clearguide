@@ -65,8 +65,8 @@ export default function CalendarPage() {
 
       // Load both document deadlines and custom calendar events
       const [documentsResponse, calendarResponse] = await Promise.all([
-        fetch("/app/api/documents", { headers, credentials: "include" }),
-        fetch("/app/api/calendar", { headers, credentials: "include" }),
+        fetch("/api/documents", { headers, credentials: "include" }),
+        fetch("/api/calendar", { headers, credentials: "include" }),
       ]);
 
       let documents: DocumentRecord[] = [];

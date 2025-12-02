@@ -57,7 +57,7 @@ export default function HistoryPage() {
         "Authorization": `Bearer ${token}`,
       };
 
-      const response = await fetch("/app/api/documents", {
+      const response = await fetch("/api/documents", {
         headers,
         credentials: "include",
       });
@@ -268,7 +268,7 @@ export default function HistoryPage() {
         "Content-Type": "application/json",
       };
 
-      const response = await fetch(`/app/api/documents/${id}`, {
+      const response = await fetch(`/api/documents/${id}`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ fileName: newName }),

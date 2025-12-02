@@ -29,7 +29,7 @@ export function ChatbotWrapper() {
             "Authorization": `Bearer ${token}`,
           };
 
-          const res = await fetch(`/app/api/documents/${documentId}`, {
+          const res = await fetch(`/api/documents/${documentId}`, {
             headers,
             credentials: "include",
           });
