@@ -2,6 +2,7 @@ import { PDFDocument } from "pdf-lib";
 import { openai } from "@/src/lib/openai/client";
 import { extractTextFromHWP, isHWPFile } from "./hwpExtractor";
 import { extractTextFromDOCX, extractTextFromDOC, isDOCXFile, isDOCFile } from "./docxExtractor";
+import { dedupeOCRText } from "./textCleaner";
 
 export interface OCRResult {
   text: string;
@@ -156,6 +157,19 @@ export async function extractTextWithGPT4o(file: File): Promise<OCRResult> {
       console.error("[OCR] GPT-4o refused to process image:", extractedText);
       throw new Error("GPT-4o가 이미지를 처리할 수 없습니다. 다른 이미지를 시도해주세요.");
     }
+
+    // Clean up duplicate lines and repeated patterns from OCR output
+    const { cleanedText, stats } = dedupeOCRText(extractedText);
+    if (stats.duplicateLinesRemoved > 0 || stats.repeatedPatternsRemoved > 0 || stats.consecutiveBlocksCollapsed > 0) {
+      console.log("[OCR] Cleaned OCR text:", {
+        duplicateLinesRemoved: stats.duplicateLinesRemoved,
+        repeatedPatternsRemoved: stats.repeatedPatternsRemoved,
+        consecutiveBlocksCollapsed: stats.consecutiveBlocksCollapsed,
+        originalLength: stats.originalLength,
+        cleanedLength: stats.cleanedLength,
+      });
+    }
+    extractedText = cleanedText;
 
     // Determine page count for PDFs
     let pageCount: number | undefined;

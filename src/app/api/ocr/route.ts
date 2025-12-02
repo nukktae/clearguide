@@ -3,14 +3,17 @@ import { extractTextWithGPT4o } from "@/src/lib/ocr/ocrClient";
 import { requireAuth } from "@/src/lib/auth/api-auth";
 import { saveOCRResult, getAllUserOCRResults } from "@/src/lib/firebase/firestore-ocr";
 import { getDocumentById } from "@/src/lib/firebase/firestore-documents";
-import { getFilePath, fileExists } from "@/src/lib/storage/files";
-import { promises as fs } from "fs";
 import { chunkTextWithPages, embedChunks, getOptimalChunkParams } from "@/src/lib/rag";
 import { storeChunks, deleteChunksByDocumentId } from "@/src/lib/supabase/vectors";
 import { isSupabaseConfigured } from "@/src/lib/supabase/client";
 import { maskAll } from "@/src/lib/privacy/masker";
 import { getPrivacySettings } from "@/src/lib/firebase/firestore-privacy";
 import { deleteNow, saveWithTTL } from "@/src/lib/privacy/retention";
+import { dedupeOCRText } from "@/src/lib/ocr/textCleaner";
+import { supabaseAdmin } from "@/src/lib/supabase/server";
+
+// Supabase Storage bucket name for document files
+const SUPABASE_BUCKET_NAME = process.env.SUPABASE_STORAGE_BUCKET || "clearguide-files";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -223,27 +226,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if file exists on disk
-    const fileExistsResult = await fileExists(document.filePath);
-    if (!fileExistsResult) {
-      const fullPath = getFilePath(document.filePath);
-      console.error("[API OCR] File not found on disk:", { 
+    // Download file from Supabase Storage
+    console.log("[API OCR] Downloading file from Supabase Storage:", {
+      bucket: SUPABASE_BUCKET_NAME,
+      filePath: document.filePath,
+      documentId,
+    });
+
+    const { data: fileData, error: downloadError } = await supabaseAdmin
+      .storage
+      .from(SUPABASE_BUCKET_NAME)
+      .download(document.filePath);
+
+    if (downloadError || !fileData) {
+      console.error("[API OCR] Supabase download error:", {
+        error: downloadError?.message,
         filePath: document.filePath,
-        fullPath,
-        documentId 
+        bucket: SUPABASE_BUCKET_NAME,
+        documentId,
       });
       return NextResponse.json(
         { 
           error: "파일을 찾을 수 없습니다.",
-          details: `File path: ${document.filePath}, Full path: ${fullPath}`
+          details: downloadError?.message || `File not found in Supabase Storage: ${document.filePath}`
         },
         { status: 404 }
       );
     }
 
-    // Read file from disk
-    const filePath = getFilePath(document.filePath);
-    const fileBuffer = await fs.readFile(filePath);
+    // Convert blob to buffer
+    const arrayBuffer = await fileData.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
     
     // Convert buffer to File object for OCR
     const fileBlob = new Blob([fileBuffer], { type: document.fileType });
@@ -251,6 +264,16 @@ export async function POST(request: NextRequest) {
 
     // Extract text using GPT-4o vision
     const ocrResult = await extractTextWithGPT4o(file);
+
+    // Clean up duplicate lines and repeated patterns from OCR output
+    const { cleanedText, stats: cleanupStats } = dedupeOCRText(ocrResult.text);
+    console.log("[API OCR] OCR text cleanup:", {
+      duplicateLinesRemoved: cleanupStats.duplicateLinesRemoved,
+      repeatedPatternsRemoved: cleanupStats.repeatedPatternsRemoved,
+      consecutiveBlocksCollapsed: cleanupStats.consecutiveBlocksCollapsed,
+      originalLength: cleanupStats.originalLength,
+      cleanedLength: cleanupStats.cleanedLength,
+    });
 
     // Get user privacy settings
     const privacySettings = await getPrivacySettings(userId);
@@ -260,7 +283,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Mask PII before saving to Firestore (never persist raw PII)
-    const maskedResult = maskAll(ocrResult.text, {
+    // Apply masking to cleaned text
+    const maskedResult = maskAll(cleanedText, {
       mode: privacySettings.maskingMode,
       preserveFormat: true,
     });
@@ -344,13 +368,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       ocrId,
-      text: maskedResult.maskedText, // Return masked text (never expose raw PII)
+      text: maskedResult.maskedText, // Return cleaned + masked text (never expose raw PII)
       confidence: ocrResult.confidence,
       pageCount: ocrResult.pageCount,
       ragEnabled: isSupabaseConfigured(),
       embeddingsGenerated,
       piiMasked: maskedResult.metadata.maskedItems.length > 0,
       piiTypes: maskedResult.metadata.piiTypes,
+      cleanupStats: {
+        duplicateLinesRemoved: cleanupStats.duplicateLinesRemoved,
+        repeatedPatternsRemoved: cleanupStats.repeatedPatternsRemoved,
+        consecutiveBlocksCollapsed: cleanupStats.consecutiveBlocksCollapsed,
+        originalLength: cleanupStats.originalLength,
+        cleanedLength: cleanupStats.cleanedLength,
+      },
     });
   } catch (error) {
     console.error("[API] OCR error:", error);
