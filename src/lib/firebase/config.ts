@@ -104,11 +104,60 @@ if (typeof window !== "undefined") {
   initializeFirebase();
 }
 
-// Export instances
-// If Firebase config is invalid, these will be null, preventing the Installations error
-// Components should handle the case where Firebase is not available
-export const auth = authInstance as Auth;
-export const db = dbInstance as Firestore;
+// Helper function to ensure Firebase is initialized and return auth instance
+function getAuthInstance(): Auth {
+  if (typeof window !== "undefined" && !authInstance) {
+    initializeFirebase();
+  }
+  if (!authInstance) {
+    // On server side, return a dummy object that will throw on use
+    // This prevents the Installations error by not initializing with invalid config
+    throw new Error(
+      "Firebase Auth is not initialized. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+    );
+  }
+  return authInstance;
+}
+
+// Helper function to ensure Firebase is initialized and return db instance
+function getDbInstance(): Firestore {
+  if (typeof window !== "undefined" && !dbInstance) {
+    initializeFirebase();
+  }
+  if (!dbInstance) {
+    throw new Error(
+      "Firestore is not initialized. Please ensure all Firebase environment variables (NEXT_PUBLIC_FIREBASE_*) are set correctly in your Vercel environment."
+    );
+  }
+  return dbInstance;
+}
+
+// Create proxy objects that lazily initialize Firebase when accessed
+// This prevents the Firebase Installations error by validating config before initializing
+const authProxy = new Proxy({} as Auth, {
+  get(_target, prop) {
+    const instance = getAuthInstance();
+    const value = (instance as any)[prop];
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+});
+
+const dbProxy = new Proxy({} as Firestore, {
+  get(_target, prop) {
+    const instance = getDbInstance();
+    const value = (instance as any)[prop];
+    if (typeof value === "function") {
+      return value.bind(instance);
+    }
+    return value;
+  },
+});
+
+export const auth = authProxy;
+export const db = dbProxy;
 export const analytics = analyticsInstance;
 export default app;
 
