@@ -101,7 +101,19 @@ export function getAdminDb(): Firestore {
     initializeAdmin();
   }
   if (!adminDb) {
-    throw new Error("Firebase Admin Firestore is not initialized");
+    const errorDetails = {
+      hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+      isVercel: process.env.VERCEL === "1",
+      nodeEnv: process.env.NODE_ENV,
+    };
+    console.error("[Admin Firestore] Failed to initialize - details:", errorDetails);
+    throw new Error(
+      `Firebase Admin Firestore is not initialized. ` +
+      `Project ID: ${errorDetails.hasProjectId ? "✓" : "✗"}, ` +
+      `Service Account: ${errorDetails.hasServiceAccount ? "✓" : "✗"}. ` +
+      `Please check environment variables: NEXT_PUBLIC_FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT_KEY`
+    );
   }
   return adminDb;
 }

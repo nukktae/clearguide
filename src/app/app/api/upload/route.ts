@@ -125,6 +125,8 @@ export async function POST(request: NextRequest) {
       name: error instanceof Error ? error.name : undefined,
       isVercel: process.env.VERCEL === "1",
       nodeEnv: process.env.NODE_ENV,
+      hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
     });
     
     // Handle authentication errors
@@ -132,6 +134,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "인증이 필요합니다." },
         { status: 401 }
+      );
+    }
+    
+    // Handle Admin SDK initialization errors
+    if (error instanceof Error && (
+      error.message.includes("not initialized") ||
+      error.message.includes("Admin Firestore") ||
+      error.message.includes("FIREBASE_SERVICE_ACCOUNT_KEY") ||
+      error.message.includes("NEXT_PUBLIC_FIREBASE_PROJECT_ID")
+    )) {
+      console.error("[API Upload] Admin SDK initialization error detected");
+      return NextResponse.json(
+        {
+          error: "서버 설정 오류가 발생했습니다.",
+          details: "Firebase Admin SDK가 초기화되지 않았습니다. 환경 변수를 확인하세요.",
+          hint: process.env.VERCEL === "1" 
+            ? "Vercel 환경 변수에서 FIREBASE_SERVICE_ACCOUNT_KEY와 NEXT_PUBLIC_FIREBASE_PROJECT_ID를 확인하세요."
+            : "로컬 환경 변수에서 FIREBASE_SERVICE_ACCOUNT_KEY와 NEXT_PUBLIC_FIREBASE_PROJECT_ID를 확인하세요.",
+        },
+        { status: 500 }
       );
     }
     
@@ -146,6 +168,16 @@ export async function POST(request: NextRequest) {
     
     if (isFilesystemError) {
       console.error("[API Upload] Filesystem error detected - this may indicate Vercel filesystem issue");
+      return NextResponse.json(
+        {
+          error: "파일 저장 중 오류가 발생했습니다.",
+          details: "서버 파일 시스템에 문제가 있습니다.",
+          hint: process.env.VERCEL === "1" 
+            ? "Vercel에서는 /tmp 디렉토리만 쓰기 가능합니다. 파일 저장 경로를 확인하세요."
+            : "파일 저장 디렉토리 권한을 확인하세요.",
+        },
+        { status: 500 }
+      );
     }
     
     return NextResponse.json(

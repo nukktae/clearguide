@@ -33,9 +33,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("[API Documents] Get documents error:", error);
-    console.error("[API] Error details:", {
+    console.error("[API Documents] Error details:", {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : "Unknown",
+      isVercel: process.env.VERCEL === "1",
+      hasProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
     });
     
     // Handle authentication errors
@@ -43,6 +47,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "인증이 필요합니다." },
         { status: 401 }
+      );
+    }
+    
+    // Handle Admin SDK initialization errors
+    if (error instanceof Error && (
+      error.message.includes("not initialized") ||
+      error.message.includes("Admin Firestore") ||
+      error.message.includes("FIREBASE_SERVICE_ACCOUNT_KEY") ||
+      error.message.includes("NEXT_PUBLIC_FIREBASE_PROJECT_ID")
+    )) {
+      console.error("[API Documents] Admin SDK initialization error detected");
+      return NextResponse.json(
+        {
+          error: "서버 설정 오류가 발생했습니다.",
+          details: "Firebase Admin SDK가 초기화되지 않았습니다. 환경 변수를 확인하세요.",
+          hint: process.env.VERCEL === "1" 
+            ? "Vercel 환경 변수에서 FIREBASE_SERVICE_ACCOUNT_KEY와 NEXT_PUBLIC_FIREBASE_PROJECT_ID를 확인하세요."
+            : "로컬 환경 변수에서 FIREBASE_SERVICE_ACCOUNT_KEY와 NEXT_PUBLIC_FIREBASE_PROJECT_ID를 확인하세요.",
+        },
+        { status: 500 }
       );
     }
     
