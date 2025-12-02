@@ -6,10 +6,10 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthGuard>
-      <AppShell>{children}</AppShell>
-    </AuthGuard>
-  );
+    return (
+      <AuthGuard>
+        <AppShell>{children}</AppShell>
+      </AuthGuard>
+    );
 }
 
