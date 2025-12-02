@@ -24,7 +24,7 @@ function detectSSN(text: string): PIIItem[] {
   const items: PIIItem[] = [];
   // Pattern: 6 digits - 7 digits
   const ssnPattern = /\b(\d{6})-(\d{7})\b/g;
-  let match;
+  let match: RegExpExecArray | null;
 
   while ((match = ssnPattern.exec(text)) !== null) {
     const firstSix = match[1];
@@ -52,7 +52,7 @@ function detectAccountNumber(text: string): PIIItem[] {
   
   // Pattern 1: With hyphens (e.g., 301-1234-5678-90)
   const hyphenPattern = /\b(\d{2,4})-(\d{3,4})-(\d{3,4})-(\d{2,4})\b/g;
-  let match;
+  let match: RegExpExecArray | null;
   
   while ((match = hyphenPattern.exec(text)) !== null) {
     const fullMatch = match[0];
@@ -95,7 +95,7 @@ function detectPhoneNumber(text: string): PIIItem[] {
   
   // Mobile: 010-XXXX-XXXX, 011-XXXX-XXXX, 016-XXXX-XXXX, etc.
   const mobilePattern = /\b(01[0-9])-(\d{3,4})-(\d{4})\b/g;
-  let match;
+  let match: RegExpExecArray | null;
   
   while ((match = mobilePattern.exec(text)) !== null) {
     items.push({
@@ -130,7 +130,7 @@ function detectAddress(text: string): PIIItem[] {
   // Pattern: 시/도 + 구/군 + 동/읍/면 + 번지
   // Examples: 서울시 강남구 역삼동 123번지, 부산시 해운대구 우동 456번지
   const addressPattern = /\b([가-힣]+(?:시|도|특별시|광역시))\s+([가-힣]+(?:구|군|시))\s+([가-힣]+(?:동|읍|면|리))\s*(\d+번지|\d+-\d+)?/g;
-  let match;
+  let match: RegExpExecArray | null;
   
   while ((match = addressPattern.exec(text)) !== null) {
     items.push({
@@ -145,15 +145,17 @@ function detectAddress(text: string): PIIItem[] {
   const simpleAddressPattern = /\b([가-힣]+(?:동|로|길))\s*(\d+번지|\d+-\d+|\d+호)?/g;
   while ((match = simpleAddressPattern.exec(text)) !== null) {
     // Avoid duplicates
+    const matchIndex = match.index;
+    const matchLength = match[0].length;
     const isDuplicate = items.some(item => 
-      item.startIndex <= match.index && item.endIndex >= match.index + match[0].length
+      item.startIndex <= matchIndex && item.endIndex >= matchIndex + matchLength
     );
     if (!isDuplicate) {
       items.push({
         type: 'address',
         value: match[0],
-        startIndex: match.index,
-        endIndex: match.index + match[0].length,
+        startIndex: matchIndex,
+        endIndex: matchIndex + matchLength,
       });
     }
   }
@@ -177,7 +179,7 @@ function detectName(text: string): PIIItem[] {
     'g'
   );
   
-  let match;
+  let match: RegExpExecArray | null;
   while ((match = namePattern.exec(text)) !== null) {
     const name = match[2];
     // Only capture the name part, not the keyword
@@ -208,15 +210,17 @@ function detectName(text: string): PIIItem[] {
     
     if (hasNameContext) {
       // Avoid duplicates
+      const matchIndex = match.index;
+      const matchLength = match[0].length;
       const isDuplicate = items.some(item => 
-        item.startIndex <= match.index && item.endIndex >= match.index + match[0].length
+        item.startIndex <= matchIndex && item.endIndex >= matchIndex + matchLength
       );
       if (!isDuplicate) {
         items.push({
           type: 'name',
           value: potentialName,
-          startIndex: match.index,
-          endIndex: match.index + match[0].length,
+          startIndex: matchIndex,
+          endIndex: matchIndex + matchLength,
         });
       }
     }
@@ -234,7 +238,7 @@ function detectEmail(text: string): PIIItem[] {
   
   // Standard email pattern
   const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-  let match;
+  let match: RegExpExecArray | null;
   
   while ((match = emailPattern.exec(text)) !== null) {
     items.push({
@@ -257,7 +261,7 @@ function detectCardNumber(text: string): PIIItem[] {
   
   // Pattern: 4-4-4-4 with hyphens or spaces
   const cardPattern = /\b(\d{4})[- ](\d{4})[- ](\d{4})[- ](\d{4})\b/g;
-  let match;
+  let match: RegExpExecArray | null;
   
   while ((match = cardPattern.exec(text)) !== null) {
     items.push({

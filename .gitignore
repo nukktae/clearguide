@@ -51,4 +51,10 @@ TECHNICAL_CHALLENGES_ANALYSIS.md
 TECHNICAL_CHALLENGES_VERIFICATION_REPORT.md
 TECHNICAL_CHALLENGES_VERIFICATION.md
 PORTFOLIO_SUMMARY.md
+COMPETITION_CODE_REVIEW.md
 2025_AI_챌린지_성과보고서.md
+
+# setup scripts and documentation (not needed for competition)
+add-ner-key.sh
+setup-ner-env.sh
+supabase-schema.sql

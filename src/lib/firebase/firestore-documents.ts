@@ -279,6 +279,36 @@ export async function getDocumentsByType(
 }
 
 /**
+ * Get document by filePath (for file serving endpoint)
+ */
+export async function getDocumentByFilePath(
+  filePath: string,
+  userId: string
+): Promise<DocumentRecord | null> {
+  try {
+    const constraints = [
+      where("userId", "==", userId),
+      where("filePath", "==", filePath),
+    ];
+    
+    const docs = await getDocuments<FirestoreDocumentRecord>(
+      COLLECTION_NAME,
+      constraints
+    );
+    
+    if (docs.length === 0) {
+      return null;
+    }
+    
+    // Return first match (should only be one)
+    return firestoreToDocument(docs[0]);
+  } catch (error) {
+    console.error("[Firestore Documents] Error getting document by filePath:", error);
+    return null;
+  }
+}
+
+/**
  * Search documents by filename
  */
 export async function searchDocuments(

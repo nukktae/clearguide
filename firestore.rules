@@ -1,30 +1,96 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY TEST MODE - Allows all reads/writes for testing
-    // TODO: Replace with proper security rules using Firebase Admin SDK
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && resource.data.userId == userId;
+    }
+    
+    // Helper function to check if user owns the document being created
+    function isCreatingOwner(userId) {
+      return isAuthenticated() && request.resource.data.userId == userId;
+    }
+    
+    // Documents collection - users can only access their own documents
     match /documents/{documentId} {
-      allow read, write: if true;
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
     }
     
     // OCR results collection - users can access their own OCR results
     match /ocr_results/{ocrId} {
-      allow read, write: if true; // Temporary: allow all for testing
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
     }
     
     // Summaries collection - users can access their own summaries
     match /summaries/{summaryId} {
-      allow read, write: if true; // Temporary: allow all for testing
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
     }
     
     // Checklists collection - users can access their own checklists
     match /checklists/{checklistId} {
-      allow read, write: if true; // Temporary: allow all for testing
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
     }
     
     // Calendar events collection - users can access their own calendar events
     match /calendarEvents/{eventId} {
-      allow read, write: if true; // Temporary: allow all for testing
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
+    }
+    
+    // Chat conversations collection - users can access their own conversations
+    match /conversations/{conversationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
+    }
+    
+    // Chat messages collection - users can access messages in their conversations
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
+    }
+    
+    // Canonical data collection - users can access their own canonical data
+    match /canonical_data/{documentId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
+    }
+    
+    // Privacy settings collection - users can access their own settings
+    match /privacy_settings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Retention records collection - users can access their own retention records
+    match /retention_records/{documentId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isCreatingOwner(request.auth.uid);
+      allow update: if isOwner(request.auth.uid);
+      allow delete: if isOwner(request.auth.uid);
     }
     
     // Deny all other collections by default

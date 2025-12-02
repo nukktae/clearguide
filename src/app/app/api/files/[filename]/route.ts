@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getFilePath, fileExists } from "@/src/lib/storage/files";
+import { requireAuth } from "@/src/lib/auth/api-auth";
+import { getDocumentByFilePath } from "@/src/lib/firebase/firestore-documents";
 import { promises as fs } from "fs";
 
 export const runtime = "nodejs";
 
+/**
+ * GET /app/api/files/[filename]
+ * Serve uploaded files with authentication and ownership verification
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
+    // Require authentication
+    const userId = await requireAuth(request);
+    
     const { filename } = await params;
 
     // Security: prevent directory traversal
@@ -19,7 +28,16 @@ export async function GET(
       );
     }
 
-    // Check if file exists
+    // Verify file ownership by checking if document exists for this user
+    const document = await getDocumentByFilePath(filename, userId);
+    if (!document) {
+      return NextResponse.json(
+        { error: "File not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    // Check if file exists on disk
     if (!(await fileExists(filename))) {
       return NextResponse.json(
         { error: "File not found" },
@@ -38,6 +56,9 @@ export async function GET(
       jpg: "image/jpeg",
       jpeg: "image/jpeg",
       png: "image/png",
+      hwp: "application/vnd.hancom.hwp",
+      doc: "application/msword",
+      docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     };
     const contentType = contentTypeMap[ext || ""] || "application/octet-stream";
 
@@ -45,11 +66,19 @@ export async function GET(
     return new NextResponse(fileBuffer, {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `inline; filename="${filename}"`,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Disposition": `inline; filename="${document.fileName || filename}"`,
+        "Cache-Control": "private, max-age=3600", // Changed to private since files are user-specific
       },
     });
   } catch (error) {
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "인증이 필요합니다." },
+        { status: 401 }
+      );
+    }
+    
     console.error("File serve error:", error);
     return NextResponse.json(
       {
