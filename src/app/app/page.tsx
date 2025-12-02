@@ -297,9 +297,9 @@ export default function AppPage() {
 
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 lg:px-6">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Two-Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-12 items-start pt-8 pb-16">
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start pt-8 pb-16">
         {/* Left Column - Main Content */}
         <div className="flex-1 w-full lg:max-w-[800px] space-y-10">
           {/* Upload Section */}
@@ -350,7 +350,7 @@ export default function AppPage() {
         </div>
 
         {/* Right Column - Sidebar */}
-        <div className="w-full lg:w-[340px] shrink-0 space-y-6 lg:sticky lg:top-24">
+        <div className="w-full lg:w-[340px] shrink-0 space-y-6 lg:sticky lg:top-24 order-first lg:order-last">
           {/* AI Assistant Widget */}
           <AIAssistantWidget />
 

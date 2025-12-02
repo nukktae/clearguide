@@ -49,7 +49,7 @@ export function Header() {
   return (
     <>
       <header className="bg-white dark:bg-[#0F172A] sticky top-0 z-30 border-t border-gray-100 dark:border-gray-800">
-        <div className="container mx-auto px-4 lg:px-6">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Left Side: Logo + Navigation */}
             <div className="flex items-center gap-8">

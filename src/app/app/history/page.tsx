@@ -260,9 +260,52 @@ export default function HistoryPage() {
     );
   }
 
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
   return (
     <div className="flex flex-col lg:flex-row h-full">
-      {/* Sidebar */}
+      {/* Mobile Sidebar Toggle */}
+      <div className="lg:hidden mb-4">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1E293B] border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-[#1A1A1A] dark:text-gray-100"
+        >
+          <span>필터</span>
+        </button>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#1E293B] z-50 lg:hidden shadow-lg">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#1A1A1A] dark:text-gray-100">필터</h2>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <DocumentSidebar
+              activeFilter={activeFilter}
+              onFilterChange={(filter) => {
+                setActiveFilter(filter);
+                setIsSidebarOpen(false);
+              }}
+              documentCounts={documentCounts}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <DocumentSidebar
           activeFilter={activeFilter}

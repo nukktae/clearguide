@@ -132,7 +132,7 @@ export function DocumentRow({
     >
       <div
         className={cn(
-          "grid grid-cols-[minmax(200px,1fr)_minmax(80px,auto)_minmax(80px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(150px,auto)_minmax(120px,auto)_minmax(80px,auto)_minmax(100px,auto)_minmax(160px,auto)] gap-3 md:gap-4 items-center py-3 px-4 rounded-lg transition-colors cursor-pointer",
+          "grid grid-cols-[minmax(200px,1fr)_minmax(80px,auto)_minmax(80px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(150px,auto)_minmax(120px,auto)_minmax(80px,auto)_minmax(100px,auto)_minmax(160px,auto)] gap-3 md:gap-4 items-center py-3 px-4 rounded-lg transition-colors cursor-pointer min-w-[600px] sm:min-w-0",
           isHovered && "bg-gray-50 dark:bg-gray-800/50"
         )}
         onClick={() => onView(document.id)}

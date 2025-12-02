@@ -58,7 +58,7 @@ export function DocumentSidebar({
   ];
 
   return (
-    <div className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B] p-4">
+    <div className="w-64 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1E293B] p-4 h-full overflow-y-auto">
       <h2 className="text-sm font-semibold text-[#1A1A1A] dark:text-gray-100 mb-4">
         {t("documentSidebar.title")}
       </h2>
@@ -73,7 +73,7 @@ export function DocumentSidebar({
               key={filter.id}
               onClick={() => onFilterChange(filter.id)}
               className={cn(
-                "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors",
+                "w-full flex items-center justify-between gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm transition-colors touch-manipulation",
                 isActive
                   ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100 font-medium"
                   : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#1A1A1A] dark:hover:text-gray-100"

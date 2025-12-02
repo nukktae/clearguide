@@ -191,40 +191,44 @@ export function PDFJSViewer({
 
       {/* Controls */}
       {numPages > 0 && (
-        <div className="border-t border-gray-200 bg-white px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="border-t border-gray-200 bg-white px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center sm:justify-start">
             <button
               onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage <= 1}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-[44px] min-w-[44px] px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+              aria-label="이전 페이지"
             >
               이전
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 px-2">
               {currentPage} / {numPages}
             </span>
             <button
               onClick={() => goToPage(currentPage + 1)}
               disabled={currentPage >= numPages}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-[44px] min-w-[44px] px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+              aria-label="다음 페이지"
             >
               다음
             </button>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center sm:justify-end">
             <button
               onClick={zoomOut}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="min-h-[44px] min-w-[44px] px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 touch-manipulation"
+              aria-label="축소"
             >
               -
             </button>
-            <span className="text-sm text-gray-600 w-16 text-center">
+            <span className="text-sm text-gray-600 w-12 sm:w-16 text-center">
               {Math.round(currentScale * 100)}%
             </span>
             <button
               onClick={zoomIn}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+              className="min-h-[44px] min-w-[44px] px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 touch-manipulation"
+              aria-label="확대"
             >
               +
             </button>

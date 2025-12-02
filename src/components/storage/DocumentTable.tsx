@@ -30,8 +30,11 @@ export function DocumentTable({
 
   return (
     <div className="bg-white dark:bg-[#1E293B] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Table Header */}
-      <div className="grid grid-cols-[minmax(200px,1fr)_minmax(80px,auto)_minmax(80px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(150px,auto)_minmax(120px,auto)_minmax(80px,auto)_minmax(100px,auto)_minmax(160px,auto)] gap-3 md:gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+      {/* Mobile-friendly wrapper with horizontal scroll */}
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="min-w-[600px] sm:min-w-0">
+          {/* Table Header */}
+          <div className="grid grid-cols-[minmax(200px,1fr)_minmax(80px,auto)_minmax(80px,auto)] md:grid-cols-[minmax(200px,1fr)_minmax(150px,auto)_minmax(120px,auto)_minmax(80px,auto)_minmax(100px,auto)_minmax(160px,auto)] gap-3 md:gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
         <div className="font-medium text-sm text-[#1A1A1A] dark:text-gray-100 flex items-center h-5">
           {t("documentTable.fileName")}
         </div>
@@ -50,10 +53,10 @@ export function DocumentTable({
         <div className="hidden md:flex font-medium text-sm text-[#1A1A1A] dark:text-gray-100 items-center justify-end h-5">
           {t("documentTable.actions")}
         </div>
-      </div>
+          </div>
 
-      {/* Table Body */}
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          {/* Table Body */}
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {documents.map((document) => (
           <DocumentRow
             key={document.id}
@@ -64,7 +67,9 @@ export function DocumentTable({
             onAddToCalendar={onAddToCalendar}
             onRename={onRename}
           />
-        ))}
+          ))}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -124,17 +124,18 @@ export function CalendarEventForm({
         className="fixed inset-0 bg-black/50 z-50"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-[#1E293B] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-[#1E293B] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md max-h-[90vh] overflow-y-auto my-auto">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-[#1A1A1A] dark:text-gray-100">
               {initialEvent ? "일정 수정" : "새 일정 추가"}
             </h3>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="min-h-[44px] min-w-[44px] p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-manipulation"
+              aria-label="닫기"
             >
-              <X className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400" />
+              <X className="h-5 w-5 text-[#6D6D6D] dark:text-gray-400" />
             </button>
           </div>
 
@@ -170,7 +171,7 @@ export function CalendarEventForm({
                 rows={3}
                 className={cn(
                   "w-full rounded-[10px] border border-[#E5E8EB] dark:border-gray-700",
-                  "bg-white dark:bg-gray-800 px-4 py-2 text-sm",
+                  "bg-white dark:bg-gray-800 px-4 py-2 text-base sm:text-sm min-h-[44px]",
                   "text-[#1A1A1A] dark:text-gray-100 placeholder:text-[#9CA3AF]",
                   "focus:outline-none focus:ring-2 focus:ring-[#1C3D6E]/20 focus:border-[#1C3D6E]",
                   "transition-colors resize-none"
@@ -200,8 +201,8 @@ export function CalendarEventForm({
                 value={urgency}
                 onChange={(e) => setUrgency(e.target.value as any)}
                 className={cn(
-                  "w-full h-[50px] rounded-[10px] border border-[#E5E8EB] dark:border-gray-700",
-                  "bg-white dark:bg-gray-800 px-4 text-sm",
+                  "w-full h-[50px] min-h-[44px] rounded-[10px] border border-[#E5E8EB] dark:border-gray-700",
+                  "bg-white dark:bg-gray-800 px-4 text-base sm:text-sm",
                   "text-[#1A1A1A] dark:text-gray-100",
                   "focus:outline-none focus:ring-2 focus:ring-[#1C3D6E]/20 focus:border-[#1C3D6E]",
                   "transition-colors"

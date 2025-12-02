@@ -90,6 +90,28 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* Mobile touch improvements */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Ensure minimum touch target size */
+button, a[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent text size adjustment on iOS */
+input, textarea, select {
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  input, textarea, select {
+    font-size: 14px;
+  }
+}
+
 /* Ensure sufficient color contrast */
 .text-headline {
   color: var(--text-headline);

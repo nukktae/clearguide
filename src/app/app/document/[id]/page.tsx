@@ -317,7 +317,7 @@ export default function DocumentDetailPage() {
       </div>
 
       {/* Document Viewer & Analysis Results Split View */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Left: Tabbed Document Viewer */}
         <div>
           <TabbedDocumentViewer

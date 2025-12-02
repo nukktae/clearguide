@@ -71,17 +71,18 @@ export function EditPhoneModal({
         className="fixed inset-0 bg-black/50 z-50"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-[#1E293B] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-[#1E293B] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 w-full max-w-md my-auto">
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-[#1A1A1A] dark:text-gray-100">
               {currentPhone ? "전화번호 변경" : "전화번호 추가"}
             </h3>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="min-h-[44px] min-w-[44px] p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-manipulation"
+              aria-label="닫기"
             >
-              <X className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400" />
+              <X className="h-5 w-5 text-[#6D6D6D] dark:text-gray-400" />
             </button>
           </div>
 

@@ -105,7 +105,7 @@ export function UploadDropzone({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#1C2329] dark:bg-white text-white dark:text-[#1C2329] rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-100 transition-all duration-200 mt-4 shadow-sm hover:shadow-md"
+            className="inline-flex items-center gap-2 px-8 py-3.5 min-h-[44px] bg-[#1C2329] dark:bg-white text-white dark:text-[#1C2329] rounded-full text-sm font-medium hover:bg-[#2A3441] dark:hover:bg-gray-100 transition-all duration-200 mt-4 shadow-sm hover:shadow-md touch-manipulation"
           >
             <File className="h-4 w-4" strokeWidth={1.5} />
             파일 선택

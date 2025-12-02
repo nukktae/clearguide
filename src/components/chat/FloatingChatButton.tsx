@@ -23,7 +23,7 @@ export function FloatingChatButton({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-white dark:bg-[#1E293B] shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center transition-all duration-200",
+        "fixed bottom-6 right-6 z-50 w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-white dark:bg-[#1E293B] shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center transition-all duration-200 touch-manipulation",
         isHovered && "scale-105 shadow-xl"
       )}
       aria-label="도움이 필요하신가요?"

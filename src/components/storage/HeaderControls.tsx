@@ -50,12 +50,13 @@ export function HeaderControls({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t("headerControls.searchPlaceholder")}
-          className="w-full pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1E293B] text-[#1A1A1A] dark:text-gray-100 placeholder:text-[#6D6D6D] dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1C2329] dark:focus:ring-blue-500"
+          className="w-full pl-10 pr-10 py-2 min-h-[44px] border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-[#1E293B] text-base sm:text-sm text-[#1A1A1A] dark:text-gray-100 placeholder:text-[#6D6D6D] dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#1C2329] dark:focus:ring-blue-500"
         />
         {searchQuery && (
           <button
             onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="absolute right-3 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 touch-manipulation"
+            aria-label="검색어 지우기"
           >
             <X className="h-4 w-4 text-[#6D6D6D] dark:text-gray-400" />
           </button>
@@ -68,7 +69,8 @@ export function HeaderControls({
           variant="ghost"
           size="sm"
           onClick={() => setShowSortMenu(!showSortMenu)}
-          className="gap-2"
+          className="gap-2 min-h-[44px] touch-manipulation"
+          aria-label="정렬"
         >
           <ArrowUpDown className="h-4 w-4" />
           <span className="hidden sm:inline">{currentSortLabel}</span>
@@ -107,22 +109,24 @@ export function HeaderControls({
         <button
           onClick={() => onViewModeChange("list")}
           className={cn(
-            "p-1.5 rounded transition-colors",
+            "min-h-[44px] min-w-[44px] p-2 rounded transition-colors touch-manipulation",
             viewMode === "list"
               ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100"
               : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
           )}
+          aria-label="목록 보기"
         >
           <List className="h-4 w-4" />
         </button>
         <button
           onClick={() => onViewModeChange("grid")}
           className={cn(
-            "p-1.5 rounded transition-colors",
+            "min-h-[44px] min-w-[44px] p-2 rounded transition-colors touch-manipulation",
             viewMode === "grid"
               ? "bg-[#1C2329] dark:bg-blue-900/30 text-white dark:text-blue-100"
               : "text-[#6D6D6D] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
           )}
+          aria-label="그리드 보기"
         >
           <Grid className="h-4 w-4" />
         </button>

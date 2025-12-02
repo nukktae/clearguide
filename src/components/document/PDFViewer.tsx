@@ -160,11 +160,11 @@ export function PDFViewer({
       {highlights.length > 0 && (
         <div className="mb-4 p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-gray-600">하이라이트:</span>
+            <span className="text-xs sm:text-sm font-medium text-gray-600">하이라이트:</span>
             <button
               onClick={() => setActiveHighlightType("all")}
               className={cn(
-                "px-2.5 py-1 text-xs rounded-md transition-colors",
+                "min-h-[44px] px-3 py-2 text-xs sm:text-sm rounded-md transition-colors touch-manipulation",
                 activeHighlightType === "all"
                   ? "bg-[#1C2329] text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -181,7 +181,7 @@ export function PDFViewer({
                     key={type}
                     onClick={() => setActiveHighlightType(type)}
                     className={cn(
-                      "px-2.5 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5",
+                      "min-h-[44px] px-3 py-2 text-xs sm:text-sm rounded-md transition-colors flex items-center gap-1.5 touch-manipulation",
                       activeHighlightType === type
                         ? "bg-[#1C2329] text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
